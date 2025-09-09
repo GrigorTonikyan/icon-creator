@@ -8,21 +8,26 @@ Important to make sure everything below is truth!:
 - this should be structure of app's frontend.
 
     ```structure
-    ├───assets
-    ├───components
-    │   ├───compOneDir
-    │   ├───compTwoDir
-    │   ├───...
-    │   └───index.ts
-    ├───features
-    │   ├───featureOneDir
-    │   ├───featureTwoDir
-    │   ├───...
-    │   └───index.ts
-    ├───utils
-    ├───constants
-    ├───styles
-    └───types
+    ├───server
+    └───src
+        ├───assets
+        ├───components
+        │   ├───compOneDir
+        │   ├───compTwoDir
+        │   ├───...
+        │   └───index.ts
+        ├───features
+        │   ├───featureOneDir
+        │   ├───featureTwoDir
+        │   ├───...
+        │   └───index.ts
+        ├───styles
+        ├───utils
+        ├───types
+        ├───App.tsx
+        ├───index.html
+        ├───index.tsx
+
     ```
 
 - Module isolation: Each feature or component gets its own directory with index.ts barrel export, make sure to use named barrel exports don't use `export * ...`
