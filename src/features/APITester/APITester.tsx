@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FC, type FormEvent } from "react";
 
 import cn from "classnames";
+import "./APITester.css";
 
-export function APITester({ className }) {
+interface APITesterProps {
+    className?: string;
+}
+
+export const APITester: FC<APITesterProps> = ({ className }) => {
     const responseInputRef = useRef<HTMLTextAreaElement>(null);
     const [status, setStatus] = useState({ status: 0, statusText: "" });
 
@@ -35,19 +40,26 @@ export function APITester({ className }) {
         }
     };
 
-    const responseAreaCn = cn(className, "response-area", [status.status], {
-        [status.statusText]: true,
+    const responseAreaCn = cn(className, "response-area", `status-${status.status}`, {
+        [status.statusText]: Boolean(status.statusText),
         success: status.status === 200,
     });
 
     return (
         <div className="api-tester">
             <form onSubmit={testEndpoint} className="endpoint-row">
-                <select name="method" className="method">
+                <label htmlFor="method-select" className="sr-only">
+                    HTTP Method
+                </label>
+                <select id="method-select" name="method" className="method">
                     <option value="GET">GET</option>
                     <option value="PUT">PUT</option>
                 </select>
+                <label htmlFor="endpoint-input" className="sr-only">
+                    API Endpoint
+                </label>
                 <input
+                    id="endpoint-input"
                     type="text"
                     name="endpoint"
                     defaultValue="/api/hello"
@@ -58,7 +70,11 @@ export function APITester({ className }) {
                     Send
                 </button>
             </form>
+            <label htmlFor="response-area" className="sr-only">
+                API Response
+            </label>
             <textarea
+                id="response-area"
                 name="response-area"
                 ref={responseInputRef}
                 readOnly
@@ -67,4 +83,4 @@ export function APITester({ className }) {
             />
         </div>
     );
-}
+};

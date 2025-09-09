@@ -1,10 +1,11 @@
-import { APITester } from "./features/APITester/APITester";
+import { type FC } from "react";
+import { APITester } from "./features";
 
 import logo from "./assets/logo.svg";
 import reactLogo from "./assets/react.svg";
 import "./styles/_index.css";
 
-export function App() {
+export const App: FC = () => {
     return (
         <div className="app-root">
             <div className="logo-container">
@@ -19,6 +20,6 @@ export function App() {
             <APITester className={"mi-ban"} />
         </div>
     );
-}
+};
 
 export default App;

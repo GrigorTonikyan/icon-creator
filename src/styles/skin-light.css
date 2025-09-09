@@ -1,0 +1,9 @@
+/* Light theme skin styles */
+
+:root {
+    --color-background: #ffffff;
+    --color-text: #000000;
+    --color-accent: #007acc;
+}
+
+/* Light theme styles can be added here */
