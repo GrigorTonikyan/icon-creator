@@ -11,6 +11,8 @@ export const APITester: FC<APITesterProps> = ({ className }) => {
     const responseInputRef = useRef<HTMLTextAreaElement>(null);
     const [status, setStatus] = useState({ status: 0, statusText: "" });
 
+    const apiTesterCn = cn("APITester", className);
+
     useEffect(() => {
         if (!status.status) return;
     }, [status]);
@@ -46,7 +48,7 @@ export const APITester: FC<APITesterProps> = ({ className }) => {
     });
 
     return (
-        <div className="api-tester">
+        <div className={apiTesterCn}>
             <form onSubmit={testEndpoint} className="endpoint-row">
                 <label htmlFor="method-select" className="sr-only">
                     HTTP Method

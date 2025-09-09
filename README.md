@@ -1,4 +1,4 @@
-# bun-react-template
+# icon-creator
 
 To install dependencies:
 

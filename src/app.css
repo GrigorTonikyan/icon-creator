@@ -1,0 +1,15 @@
+.app {
+    margin: var(--spacing-xl) auto 0;
+    width: 100%;
+    max-width: 600px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.app h1 {
+    font-size: var(--font-size-3xl);
+    line-height: 1.1;
+    text-align: center;
+}

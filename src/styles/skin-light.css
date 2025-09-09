@@ -1,9 +1,43 @@
-/* Light theme skin styles */
+/* Light theme skin styles - all color-related variables */
 
-:root {
-    --color-background: #ffffff;
-    --color-text: #000000;
-    --color-accent: #007acc;
+:root[data-theme="light"] {
+    /* Background colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+
+    /* Text colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #adb5bd;
+
+    /* Accent colors */
+    --accent-primary: #007acc;
+    --accent-primary-hover: #005a9b;
+    --accent-text: #ffffff;
+
+    /* Brand colors */
+    --color-bun: #fbf0df;
+    --color-react: #61dafb;
+    --color-vscode: #646cff;
+
+    /* Border colors */
+    --border-color: #dee2e6;
+    --border-color-hover: #adb5bd;
+
+    /* Status colors */
+    --color-success: #28a745;
+    --color-error: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+
+    /* Shadow colors */
+    --shadow-sm: rgba(0, 0, 0, 0.05);
+    --shadow-md: rgba(0, 0, 0, 0.1);
+    --shadow-lg: rgba(0, 0, 0, 0.15);
+
+    /* Glow effects */
+    --glow-bun: rgba(251, 240, 223, 0.8);
+    --glow-react: rgba(97, 218, 251, 0.8);
+    --glow-vscode: rgba(100, 108, 255, 0.8);
 }
-
-/* Light theme styles can be added here */

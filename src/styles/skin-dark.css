@@ -1,1 +1,43 @@
-/* all global variables except color related live here */
+/* Dark theme skin styles - all color-related variables */
+
+:root {
+    /* Background colors */
+    --bg-primary: #242424;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #0d1117;
+
+    /* Text colors */
+    --text-primary: rgba(255, 255, 255, 0.87);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.4);
+
+    /* Accent colors */
+    --accent-primary: #fbf0df;
+    --accent-primary-hover: #f3d5a3;
+    --accent-text: #1a1a1a;
+
+    /* Brand colors */
+    --color-bun: #fbf0df;
+    --color-react: #61dafb;
+    --color-vscode: #646cff;
+
+    /* Border colors */
+    --border-color: #fbf0df;
+    --border-color-hover: #f3d5a3;
+
+    /* Status colors */
+    --color-success: #295b26;
+    --color-error: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+
+    /* Shadow colors */
+    --shadow-sm: rgba(0, 0, 0, 0.1);
+    --shadow-md: rgba(0, 0, 0, 0.15);
+    --shadow-lg: rgba(0, 0, 0, 0.2);
+
+    /* Glow effects */
+    --glow-bun: rgba(251, 240, 223, 0.67);
+    --glow-react: rgba(97, 218, 251, 0.67);
+    --glow-vscode: rgba(100, 108, 255, 0.67);
+}
