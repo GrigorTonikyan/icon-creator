@@ -17,7 +17,7 @@ body {
     position: relative;
     background-color: var(--bg-primary);
 
-    &::before {
+    /* &::before {
         content: "";
         position: fixed;
         inset: 0;
@@ -28,11 +28,10 @@ body {
         transform: rotate(-12deg) scale(1.35);
         animation: slide 30s linear infinite;
         pointer-events: none;
-    }
+    } */
 }
 
 .app-root {
-    max-width: 1280px;
     margin: 0 auto;
     padding: var(--spacing-xl);
     text-align: center;

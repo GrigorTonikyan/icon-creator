@@ -1,2 +1,4 @@
 // Barrel export for components directory
-// Add component exports here as they are created
+export { ConfigPanel } from "./ConfigPanel/configPanel";
+export { Header } from "./Header/header";
+export { IconPreview } from "./IconPreview/iconPreview";

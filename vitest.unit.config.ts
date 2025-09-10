@@ -8,6 +8,6 @@ export default defineConfig({
         setupFiles: ["./src/test-setup.ts"],
         globals: true,
         include: ["src/**/*.test.{ts,tsx}"],
-        exclude: ["src/**/*.stories.{ts,tsx}", "node_modules/**"],
+        exclude: ["node_modules/**"],
     },
 });

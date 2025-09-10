@@ -1,30 +1,34 @@
-import { type FC } from "react";
-import { APITester } from "./features";
+import { type FC, useState } from "react";
+import { Header } from "./components/Header/header";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { APITester } from "./features/APITester/APITester";
+import { IconCreator } from "./features/IconCreator/iconCreator";
+import type { Section } from "./types/header";
 
-import cn from "classnames";
 import "./app.css";
-import logo from "./assets/logo.svg";
-import reactLogo from "./assets/react.svg";
 import "./styles/_index.css";
 
 export const App: FC = () => {
-    const appCn = cn("app");
+    const [currentSection, setCurrentSection] = useState<Section>("icon-creator");
+
+    const renderCurrentSection = () => {
+        switch (currentSection) {
+            case "icon-creator":
+                return <IconCreator />;
+            case "api-tester":
+                return <APITester />;
+            default:
+                return <IconCreator />;
+        }
+    };
 
     return (
-        <div className="app-root">
-            <div className="logo-container">
-                <img src={logo} alt="Bun Logo" className="logo bun" />
-                <img src={reactLogo} alt="React Logo" className="logo react" />
+        <ThemeProvider>
+            <div className="app-root">
+                <Header currentSection={currentSection} onSectionChange={setCurrentSection} />
+                <main className="App__main">{renderCurrentSection()}</main>
             </div>
-
-            <h1>Bun + React</h1>
-            <div className={appCn}>
-                <p>
-                    Edit <code>src/App.tsx</code> and save to test HMR
-                </p>
-                <APITester />
-            </div>
-        </div>
+        </ThemeProvider>
     );
 };
 

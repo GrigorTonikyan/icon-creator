@@ -1,6 +1,6 @@
 {
     "name": "icon-creator",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "private": true,
     "type": "module",
     "scripts": {
@@ -10,11 +10,7 @@
         "test": "vitest --config vitest.unit.config.ts",
         "test:run": "vitest run --config vitest.unit.config.ts",
         "test:ui": "vitest --ui --config vitest.unit.config.ts",
-        "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
-        "test:storybook": "vitest --config vitest.config.ts",
-        "test:storybook:run": "vitest run --config vitest.config.ts",
-        "storybook": "storybook dev -p 6006",
-        "build-storybook": "storybook build"
+        "test:coverage": "vitest run --coverage --config vitest.unit.config.ts"
     },
     "engines": {
         "bun": ">=1.2.0"
@@ -26,12 +22,6 @@
         "react-dom": "^19"
     },
     "devDependencies": {
-        "@chromatic-com/storybook": "4.1.1",
-        "@storybook/addon-a11y": "9.1.5",
-        "@storybook/addon-docs": "9.1.5",
-        "@storybook/addon-vitest": "9.1.5",
-        "@storybook/react": "^9.1.5",
-        "@storybook/react-vite": "^9.1.5",
         "@testing-library/jest-dom": "^6.8.0",
         "@testing-library/react": "^16.3.0",
         "@testing-library/user-event": "^14.6.1",
@@ -39,7 +29,6 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "jsdom": "^26.1.0",
-        "storybook": "^9.1.5",
         "vitest": "^3.2.4",
         "@vitest/browser": "^3.2.4",
         "playwright": "^1.55.0",

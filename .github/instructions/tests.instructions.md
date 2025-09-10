@@ -16,7 +16,6 @@ applyTo: "**"
 - **Component Testing:** React Testing Library (`@testing-library/react`)
 - **User Simulation:** `@testing-library/user-event`
 - **DOM:** `jsdom`
-- **Visual Testing:** Storybook (`@storybook/react`)
 - **Assertions:** `@testing-library/jest-dom`
 - **API Mocking:** Vitest's built-in mocking (`vi.mock`)
 - **Configuration:** `vitest.config.ts` defines the `jsdom` environment and global setup.
@@ -28,7 +27,6 @@ applyTo: "**"
   - **Components:** `MyComponent.test.tsx`
   - **Hooks:** `useMyHook.test.ts`
   - **Utilities:** `myUtil.test.ts`
-  - **Stories:** `MyComponent.stories.tsx`
 - **Integration Tests:** Place tests covering full user flows in a top-level `__tests__/` directory (e.g., `src/features/authentication/__tests__/login-flow.test.tsx`).
 
 ## 3. Test Requirements & Examples
@@ -84,12 +82,6 @@ describe('MyComponent', () => {
 - Returns expected outputs for valid inputs.
 - Handles edge cases (`null`, `undefined`, empty arrays, `0`).
 - Throws errors for invalid inputs as designed.
-
-### D. Visual & Storybook Tests (`*.stories.tsx`)
-
-- **Requirement:** All UI components **must** have a `*.stories.tsx` file.
-- **Coverage:** Stories must cover all visual variations of a component (props, states like `disabled`, `loading`, `error`).
-- **Purpose:** Stories are the source for automated visual regression testing via Chromatic.
 
 ## 4. Mocking
 
@@ -158,4 +150,3 @@ vi.mock('../components/ComplexChart', () => ({
 - [Vitest](https://vitest.dev/guide/)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - [@testing-library/user-event](https://testing-library.com/docs/user-event/intro)
-- [Storybook](https://storybook.js.org/docs/react/get-started/introduction)

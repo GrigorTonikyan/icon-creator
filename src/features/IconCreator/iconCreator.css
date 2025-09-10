@@ -1,0 +1,144 @@
+.IconCreator {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e5e5e5;
+    font-family: system-ui, Arial, sans-serif;
+}
+
+.creator-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #334155;
+}
+
+.creator-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7fd9ff, #9be4ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.creator-header p {
+    font-size: 1.125rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.creator-main {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.preview-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.export-btn,
+.reset-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #0066cc, #0052a3);
+    color: white;
+    box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3);
+}
+
+.export-btn:hover {
+    background: linear-gradient(135deg, #0052a3, #004080);
+    box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+    transform: translateY(-2px);
+}
+
+.reset-btn {
+    background: rgba(71, 85, 105, 0.2);
+    color: #94a3b8;
+    border: 1px solid #475569;
+}
+
+.reset-btn:hover {
+    background: rgba(71, 85, 105, 0.3);
+    color: #e5e5e5;
+    border-color: #64748b;
+}
+
+.config-section {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .creator-main {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .config-section {
+        position: static;
+    }
+
+    .preview-section {
+        order: 2;
+    }
+
+    .config-section {
+        order: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .creator-header {
+        padding: 1.5rem 1rem;
+    }
+
+    .creator-header h1 {
+        font-size: 2rem;
+    }
+
+    .creator-header p {
+        font-size: 1rem;
+    }
+
+    .creator-main {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .preview-controls {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .export-btn,
+    .reset-btn {
+        width: 100%;
+    }
+}
