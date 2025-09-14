@@ -1,5 +1,7 @@
-import cn from "classnames";
 import type { IconConfig } from "../../types/iconConfig";
+import { Checkbox, FormField, Input } from "../ui";
+
+import cn from "classnames";
 import "./configPanel.css";
 
 interface ConfigPanelProps {
@@ -20,270 +22,229 @@ export function ConfigPanel({ config, onChange, className }: ConfigPanelProps) {
             <div className="config-section">
                 <h3>Background Colors</h3>
                 <div className="config-group">
-                    <div className="color-input">
-                        <label htmlFor="bgGradStart">Gradient Start</label>
-                        <input
-                            id="bgGradStart"
-                            type="color"
+                    <FormField label="Gradient Start" inline htmlFor="config-grad-start">
+                        <Input
+                            id="config-grad-start"
+                            variant="color"
                             value={config.bgGradStart}
                             onChange={(e) => updateConfig({ bgGradStart: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="bgGradMid">Gradient Middle</label>
-                        <input
-                            id="bgGradMid"
-                            type="color"
+                    </FormField>
+                    <FormField label="Gradient Middle" inline>
+                        <Input
+                            variant="color"
                             value={config.bgGradMid}
                             onChange={(e) => updateConfig({ bgGradMid: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="bgGradEnd">Gradient End</label>
-                        <input
-                            id="bgGradEnd"
-                            type="color"
+                    </FormField>
+                    <FormField label="Gradient End" inline>
+                        <Input
+                            variant="color"
                             value={config.bgGradEnd}
                             onChange={(e) => updateConfig({ bgGradEnd: e.target.value })}
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Panel Colors</h3>
                 <div className="config-group">
-                    <div className="color-input">
-                        <label htmlFor="panelTop">Panel Top</label>
-                        <input
-                            id="panelTop"
-                            type="color"
+                    <FormField label="Panel Top" inline>
+                        <Input
+                            variant="color"
                             value={config.panelTop}
                             onChange={(e) => updateConfig({ panelTop: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="panelMid">Panel Middle</label>
-                        <input
-                            id="panelMid"
-                            type="color"
+                    </FormField>
+                    <FormField label="Panel Middle" inline>
+                        <Input
+                            variant="color"
                             value={config.panelMid}
                             onChange={(e) => updateConfig({ panelMid: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="panelBot">Panel Bottom</label>
-                        <input
-                            id="panelBot"
-                            type="color"
+                    </FormField>
+                    <FormField label="Panel Bottom" inline>
+                        <Input
+                            variant="color"
                             value={config.panelBot}
                             onChange={(e) => updateConfig({ panelBot: e.target.value })}
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Input Bar</h3>
                 <div className="config-group">
-                    <div className="color-input">
-                        <label htmlFor="barStart">Bar Start</label>
-                        <input
-                            id="barStart"
-                            type="color"
+                    <FormField label="Bar Start" inline>
+                        <Input
+                            variant="color"
                             value={config.barStart}
                             onChange={(e) => updateConfig({ barStart: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="barEnd">Bar End</label>
-                        <input
-                            id="barEnd"
-                            type="color"
+                    </FormField>
+                    <FormField label="Bar End" inline>
+                        <Input
+                            variant="color"
                             value={config.barEnd}
                             onChange={(e) => updateConfig({ barEnd: e.target.value })}
                         />
-                    </div>
-                    <div className="text-input">
-                        <label htmlFor="inputText">Input Text</label>
-                        <input
-                            id="inputText"
-                            type="text"
+                    </FormField>
+                    <FormField label="Input Text" htmlFor="config-input-text">
+                        <Input
+                            id="config-input-text"
                             value={config.inputText}
                             onChange={(e) => updateConfig({ inputText: e.target.value })}
                             placeholder="Enter text"
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Inactive Elements</h3>
                 <div className="config-group">
-                    <div className="color-input">
-                        <label htmlFor="inactiveStart">Inactive Start</label>
-                        <input
-                            id="inactiveStart"
-                            type="color"
+                    <FormField label="Inactive Start" inline>
+                        <Input
+                            variant="color"
                             value={config.inactiveStart}
                             onChange={(e) => updateConfig({ inactiveStart: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="inactiveEnd">Inactive End</label>
-                        <input
-                            id="inactiveEnd"
-                            type="color"
+                    </FormField>
+                    <FormField label="Inactive End" inline>
+                        <Input
+                            variant="color"
                             value={config.inactiveEnd}
                             onChange={(e) => updateConfig({ inactiveEnd: e.target.value })}
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Accent & Glow</h3>
                 <div className="config-group">
-                    <div className="color-input">
-                        <label htmlFor="borderGlow">Border Glow</label>
-                        <input
-                            id="borderGlow"
-                            type="color"
+                    <FormField label="Border Glow" inline>
+                        <Input
+                            variant="color"
                             value={config.borderGlow}
                             onChange={(e) => updateConfig({ borderGlow: e.target.value })}
                         />
-                    </div>
-                    <div className="color-input">
-                        <label htmlFor="accent">Accent Color</label>
-                        <input
-                            id="accent"
-                            type="color"
+                    </FormField>
+                    <FormField label="Accent Color" inline>
+                        <Input
+                            variant="color"
                             value={config.accent}
                             onChange={(e) => updateConfig({ accent: e.target.value })}
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Dimensions</h3>
                 <div className="config-group">
-                    <div className="range-input">
-                        <label htmlFor="iconSize">Icon Size</label>
-                        <input
-                            id="iconSize"
-                            type="range"
-                            min="128"
-                            max="512"
-                            step="64"
+                    <FormField label="Icon Size" htmlFor="config-icon-size">
+                        <Input
+                            id="config-icon-size"
+                            variant="range"
+                            min={128}
+                            max={512}
+                            step={64}
                             value={config.iconSize}
                             onChange={(e) => updateConfig({ iconSize: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.iconSize}px</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="borderRadius">Border Radius</label>
-                        <input
-                            id="borderRadius"
-                            type="range"
-                            min="15"
-                            max="90"
-                            step="15"
+                    </FormField>
+                    <FormField label="Border Radius">
+                        <Input
+                            variant="range"
+                            min={15}
+                            max={90}
+                            step={15}
                             value={config.borderRadius}
                             onChange={(e) => updateConfig({ borderRadius: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.borderRadius}px</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="panelWidth">Panel Width</label>
-                        <input
-                            id="panelWidth"
-                            type="range"
-                            min="40"
-                            max="60"
-                            step="5"
+                    </FormField>
+                    <FormField label="Panel Width">
+                        <Input
+                            variant="range"
+                            min={40}
+                            max={60}
+                            step={5}
                             value={config.panelWidth}
                             onChange={(e) => updateConfig({ panelWidth: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.panelWidth}%</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="panelHeight">Panel Height</label>
-                        <input
-                            id="panelHeight"
-                            type="range"
-                            min="40"
-                            max="60"
-                            step="5"
+                    </FormField>
+                    <FormField label="Panel Height">
+                        <Input
+                            variant="range"
+                            min={40}
+                            max={60}
+                            step={5}
                             value={config.panelHeight}
                             onChange={(e) => updateConfig({ panelHeight: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.panelHeight}%</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="inputHeight">Input Height</label>
-                        <input
-                            id="inputHeight"
-                            type="range"
-                            min="60"
-                            max="88"
-                            step="14"
+                    </FormField>
+                    <FormField label="Input Height">
+                        <Input
+                            variant="range"
+                            min={60}
+                            max={88}
+                            step={14}
                             value={config.inputHeight}
                             onChange={(e) => updateConfig({ inputHeight: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.inputHeight}px</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="inactiveBarWidth">Inactive Bar Width</label>
-                        <input
-                            id="inactiveBarWidth"
-                            type="range"
-                            min="150"
-                            max="250"
-                            step="25"
+                    </FormField>
+                    <FormField label="Inactive Bar Width">
+                        <Input
+                            variant="range"
+                            min={150}
+                            max={250}
+                            step={25}
                             value={config.inactiveBarWidth}
                             onChange={(e) => updateConfig({ inactiveBarWidth: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.inactiveBarWidth}px</span>
-                    </div>
-                    <div className="range-input">
-                        <label htmlFor="pillWidth">Pill Width</label>
-                        <input
-                            id="pillWidth"
-                            type="range"
-                            min="80"
-                            max="112"
-                            step="16"
+                    </FormField>
+                    <FormField label="Pill Width">
+                        <Input
+                            variant="range"
+                            min={80}
+                            max={112}
+                            step={16}
                             value={config.pillWidth}
                             onChange={(e) => updateConfig({ pillWidth: Number(e.target.value) })}
+                            showValue
                         />
-                        <span className="range-value">{config.pillWidth}px</span>
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
             <div className="config-section">
                 <h3>Title</h3>
                 <div className="config-group">
-                    <div className="checkbox-input">
-                        <input
-                            id="showTitle"
-                            type="checkbox"
-                            checked={config.showTitle}
-                            onChange={(e) => updateConfig({ showTitle: e.target.checked })}
-                        />
-                        <label htmlFor="showTitle">Show Title</label>
-                    </div>
-                    <div className="text-input">
-                        <label htmlFor="title">Title Text</label>
+                    <Checkbox
+                        id="showTitle"
+                        label="Show Title"
+                        checked={config.showTitle}
+                        onChange={(e) => updateConfig({ showTitle: e.target.checked })}
+                    />
+                    <FormField label="Title Text" htmlFor="config-title-text">
                         <textarea
-                            id="title"
+                            id="config-title-text"
                             value={config.title}
                             onChange={(e) => updateConfig({ title: e.target.value })}
                             placeholder="Enter title"
                             rows={3}
+                            className="Input Input--text"
                         />
-                    </div>
+                    </FormField>
                 </div>
             </div>
         </div>

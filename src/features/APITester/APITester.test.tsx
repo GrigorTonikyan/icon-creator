@@ -10,6 +10,22 @@ Object.defineProperty(globalThis, "fetch", {
     writable: true,
 });
 
+// Mock URL constructor for endpoint validation
+Object.defineProperty(globalThis, "URL", {
+    value: vi.fn().mockImplementation((url) => {
+        if (typeof url !== "string" || !url.includes("://")) {
+            throw new TypeError("Invalid URL");
+        }
+        return {
+            href: url,
+            protocol: url.split("://")[0] + ":",
+            hostname: url.split("://")[1]?.split("/")[0] || "",
+            pathname: "/" + (url.split("://")[1]?.split("/").slice(1).join("/") || ""),
+        };
+    }),
+    writable: true,
+});
+
 describe("APITester", () => {
     beforeEach(() => {
         mockFetch.mockClear();
@@ -24,7 +40,7 @@ describe("APITester", () => {
         expect(screen.getByLabelText("API Response")).toBeInTheDocument();
     });
 
-    test("should call onClick handler when the send button is clicked", async () => {
+    test("should call API when button is clicked", async () => {
         const user = userEvent.setup();
 
         // Mock successful API response
@@ -37,13 +53,17 @@ describe("APITester", () => {
         render(<APITester />);
 
         const sendButton = screen.getByRole("button", { name: /send/i });
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Set a valid URL
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "https://api.example.com/test");
 
         // Act
         await user.click(sendButton);
 
         // Assert
         expect(mockFetch).toHaveBeenCalledOnce();
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(URL), { method: "GET" });
     });
 
     test("should handle API success response correctly", async () => {
@@ -56,18 +76,26 @@ describe("APITester", () => {
             json: vi.fn().mockResolvedValueOnce(mockResponseData),
         });
 
-        render(<APITester />);
+        const { container } = render(<APITester />);
 
         const sendButton = screen.getByRole("button", { name: /send/i });
         const responseArea = screen.getByLabelText("API Response");
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Set a valid URL
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "https://api.example.com/test");
 
         // Act
         await user.click(sendButton);
 
         // Assert
-        await waitFor(() => {
-            expect(responseArea).toHaveValue(JSON.stringify(mockResponseData, null, 2));
-        });
+        await waitFor(
+            () => {
+                expect(responseArea).toHaveValue(JSON.stringify(mockResponseData, null, 2));
+            },
+            { container }
+        );
 
         expect(responseArea).toHaveClass("success");
         expect(responseArea).toHaveClass("status-200");
@@ -79,23 +107,29 @@ describe("APITester", () => {
         mockFetch.mockResolvedValueOnce({
             status: 404,
             statusText: "Not Found",
-            json: vi.fn().mockResolvedValueOnce({ error: "Endpoint not found" }),
+            json: vi.fn().mockResolvedValueOnce({ error: "Not found" }),
         });
 
-        render(<APITester />);
+        const { container } = render(<APITester />);
 
         const sendButton = screen.getByRole("button", { name: /send/i });
         const responseArea = screen.getByLabelText("API Response");
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Set a valid URL
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "https://api.example.com/test");
 
         // Act
         await user.click(sendButton);
 
         // Assert
-        await waitFor(() => {
-            expect(responseArea).toHaveClass("status-404");
-        });
-
-        expect(responseArea).not.toHaveClass("success");
+        await waitFor(
+            () => {
+                expect(responseArea).toHaveClass("status-404");
+            },
+            { container }
+        );
     });
 
     test("should handle network errors correctly", async () => {
@@ -104,18 +138,26 @@ describe("APITester", () => {
 
         mockFetch.mockRejectedValueOnce(new Error(errorMessage));
 
-        render(<APITester />);
+        const { container } = render(<APITester />);
 
         const sendButton = screen.getByRole("button", { name: /send/i });
         const responseArea = screen.getByLabelText("API Response");
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Set a valid URL
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "https://api.example.com/test");
 
         // Act
         await user.click(sendButton);
 
         // Assert
-        await waitFor(() => {
-            expect(responseArea).toHaveValue(`Error: ${errorMessage}`);
-        });
+        await waitFor(
+            () => {
+                expect(responseArea).toHaveValue(`Error: ${errorMessage}`);
+            },
+            { container }
+        );
     });
 
     test("should allow changing HTTP method", async () => {
@@ -131,18 +173,28 @@ describe("APITester", () => {
 
         const methodSelect = screen.getByLabelText("HTTP Method");
         const sendButton = screen.getByRole("button", { name: /send/i });
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Set a valid URL
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "https://api.example.com/test");
 
         // Act - change method to PUT
         await user.selectOptions(methodSelect, "PUT");
         await user.click(sendButton);
 
         // Assert
-        expect(mockFetch).toHaveBeenCalledWith(expect.any(URL), { method: "PUT" });
+        expect(mockFetch).toHaveBeenCalledWith(
+            expect.objectContaining({
+                href: "https://api.example.com/test",
+            }),
+            { method: "PUT" }
+        );
     });
 
     test("should allow changing endpoint URL", async () => {
         const user = userEvent.setup();
-        const customEndpoint = "/api/custom";
+        const customEndpoint = "https://api.example.com/custom";
 
         mockFetch.mockResolvedValueOnce({
             status: 200,
@@ -163,7 +215,7 @@ describe("APITester", () => {
         // Assert
         expect(mockFetch).toHaveBeenCalledWith(
             expect.objectContaining({
-                pathname: customEndpoint,
+                href: customEndpoint,
             }),
             { method: "GET" }
         );

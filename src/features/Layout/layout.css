@@ -1,0 +1,51 @@
+.layout {
+    --aside-L-W: 256px;
+    --aside-R-W: 256px;
+
+    display: grid;
+    /* grid-template-columns: repeat(var(--cn), var(--cols)); */
+
+    grid-template-columns: var(--aside-L-W) 1fr 1fr var(--aside-R-W);
+    grid-template-rows: 80px 1fr 120px;
+
+    transition: grid var(--transition-slow);
+
+    > header {
+        grid-area: navbar;
+    }
+    > aside {
+        grid-area: aside-r;
+
+        position: relative;
+
+        width: 100%;
+
+        border: 1px solid red;
+        transition: width 1s;
+
+        > button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    &.aside-left-hidden:has(> aside:first-of-type) {
+        --aside-L-W: 0;
+    }
+    &.aside-right-hidden:has(> aside:first-of-type) {
+        --aside-L-W: 0;
+    }
+    > aside:first-of-type {
+        grid-area: aside-l;
+    }
+    > main {
+        grid-area: main;
+    }
+    > footer {
+        grid-area: footer;
+
+        border: 1px solid red;
+    }
+}

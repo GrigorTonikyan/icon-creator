@@ -1,12 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Theme, ThemeContextType } from "../types/header";
+import type { Theme, ThemeContextType } from "../types/navBar";
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
     children: ReactNode;
 }
-
 export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setThemeState] = useState<Theme>(() => {
         // Check localStorage first, fallback to system preference

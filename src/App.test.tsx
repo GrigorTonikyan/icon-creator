@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import App from "./App";
+import { App } from "./App";
 
 describe("App", () => {
     test("should render without crashing", () => {
         render(<App />);
 
-        expect(screen.getByText("Icon Creator")).toBeInTheDocument();
+        expect(screen.getAllByRole("heading", { level: 1, name: "Icon Creator" })).toHaveLength(2);
         expect(screen.getByText("Create and customize beautiful glowing UI icons")).toBeInTheDocument();
     });
 
@@ -21,8 +21,12 @@ describe("App", () => {
     test("should have proper class structure", () => {
         render(<App />);
 
-        const iconCreator = screen.getByText("Icon Creator").closest(".IconCreator");
-        expect(iconCreator).toBeInTheDocument();
+        const appElement = screen.getAllByRole("heading", { name: /icon creator/i })[1]?.closest(".App");
+        if (appElement) {
+            expect(appElement).toHaveClass("App");
+        } else {
+            expect(screen.getByTestId("app-root")).toHaveClass("App");
+        }
     });
 
     test("should render configuration panel", () => {
@@ -36,7 +40,7 @@ describe("App", () => {
     test("should display icon preview", () => {
         render(<App />);
 
-        const iconPreview = screen.getByRole("img");
+        const iconPreview = screen.getByRole("img", { name: /stylized glowing ui input panel/i });
         expect(iconPreview).toBeInTheDocument();
         expect(iconPreview).toHaveAttribute("aria-label");
     });

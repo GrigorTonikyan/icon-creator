@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FC, type FormEvent } from "react";
 
 import cn from "classnames";
+import { Button, Input } from "../../components/ui";
 import "./APITester.css";
 
 interface APITesterProps {
@@ -60,17 +61,16 @@ export const APITester: FC<APITesterProps> = ({ className }) => {
                 <label htmlFor="endpoint-input" className="sr-only">
                     API Endpoint
                 </label>
-                <input
+                <Input
                     id="endpoint-input"
-                    type="text"
                     name="endpoint"
                     defaultValue="/api/hello"
                     className="url-input"
                     placeholder="/api/hello"
                 />
-                <button type="submit" className="send-button">
+                <Button type="submit" className="send-button">
                     Send
-                </button>
+                </Button>
             </form>
             <label htmlFor="response-area" className="sr-only">
                 API Response
