@@ -28,7 +28,7 @@
         "@types/bun": "latest",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "jsdom": "^26.1.0",
+        "jsdom": "27.0.0",
         "vitest": "^3.2.4",
         "@vitest/browser": "^3.2.4",
         "playwright": "^1.55.0",
