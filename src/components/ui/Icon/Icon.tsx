@@ -1,7 +1,21 @@
 import cn from "classnames";
 import "./Icon.css";
 
-export type IconName = "sun" | "moon" | "settings" | "check" | "x" | "chevron-down" | "chevron-up";
+export type IconName =
+    | "sun"
+    | "moon"
+    | "settings"
+    | "check"
+    | "x"
+    | "chevron-down"
+    | "chevron-up"
+    | "chevron-right"
+    | "folder"
+    | "layer"
+    | "lock"
+    | "unlock"
+    | "eye"
+    | "eye-off";
 
 export interface IconProps {
     name: IconName;
@@ -18,6 +32,13 @@ const iconMap: Record<IconName, string> = {
     x: "✕",
     "chevron-down": "▼",
     "chevron-up": "▲",
+    "chevron-right": "▶",
+    folder: "📁",
+    layer: "▣",
+    lock: "🔒",
+    unlock: "🔓",
+    eye: "👁",
+    "eye-off": "👁‍🗨",
 };
 
 export function Icon({ name, size = "md", className, "aria-label": ariaLabel, ...props }: IconProps) {

@@ -6,25 +6,33 @@ describe("App", () => {
     test("should render without crashing", async () => {
         render(<App />);
 
-        // Wait for layout to settle since it uses a complex render system
+        // Wait for layout to settle and check for navigation
         await waitFor(() => {
-            expect(screen.getAllByRole("heading", { level: 1, name: "Icon Creator" })).toHaveLength(2);
+            expect(screen.getByRole("navigation")).toBeInTheDocument();
         });
 
+        // Check that main layout regions are present
         await waitFor(() => {
-            expect(screen.getByRole("img", { name: /stylized glowing ui input panel/i })).toBeInTheDocument();
+            expect(screen.getByRole("main")).toBeInTheDocument();
         });
     });
-    test("should render IconCreator component", async () => {
+
+    test("should render VisualEditor by default", async () => {
         render(<App />);
 
-        // IconCreator should be present (check for its distinctive elements)
+        // VisualEditor should be present (check for Canvas area)
         await waitFor(() => {
-            expect(screen.getByRole("button", { name: /export html/i })).toBeInTheDocument();
+            expect(screen.getByRole("main")).toBeInTheDocument();
         });
 
+        // Check for left sidebar (LayerPanel region)
         await waitFor(() => {
-            expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
+            expect(document.querySelector(".visual-editor__left-panel")).toBeInTheDocument();
+        });
+
+        // Check for right sidebar (PropertyPanel region)
+        await waitFor(() => {
+            expect(document.querySelector(".visual-editor__right-panel")).toBeInTheDocument();
         });
     });
 
@@ -36,29 +44,30 @@ describe("App", () => {
         expect(appRootElement).toHaveClass("app-root");
     });
 
-    test("should render configuration panel", async () => {
+    test("should render navigation with sections", async () => {
         render(<App />);
 
         await waitFor(() => {
-            expect(screen.getByText("Background Colors")).toBeInTheDocument();
+            expect(screen.getByRole("navigation")).toBeInTheDocument();
         });
 
+        // Check for navigation items
         await waitFor(() => {
-            expect(screen.getByText("Panel Colors")).toBeInTheDocument();
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText("Dimensions")).toBeInTheDocument();
+            expect(screen.getByText("Visual Editor")).toBeInTheDocument();
         });
     });
 
-    test("should display icon preview", async () => {
+    test("should render visual editor layout", async () => {
         render(<App />);
 
+        // Check that the layout container is present
         await waitFor(() => {
-            const iconPreview = screen.getByRole("img", { name: /stylized glowing ui input panel/i });
-            expect(iconPreview).toBeInTheDocument();
-            expect(iconPreview).toHaveAttribute("aria-label");
+            expect(document.querySelector(".layout")).toBeInTheDocument();
+        });
+
+        // Check for main content area
+        await waitFor(() => {
+            expect(screen.getByRole("main")).toBeInTheDocument();
         });
     });
 });

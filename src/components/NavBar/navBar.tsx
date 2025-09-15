@@ -8,6 +8,7 @@ import "./navBar.css";
 
 const navigationItems: NavigationItem[] = [
     { id: "icon-creator", label: "Icon Creator" },
+    { id: "visual-editor", label: "Visual Editor" },
     { id: "api-tester", label: "API Tester" },
 ];
 

@@ -1,5 +1,5 @@
 // Types for navigation and theme management
-export type Section = "icon-creator" | "api-tester";
+export type Section = "icon-creator" | "visual-editor" | "api-tester";
 
 export interface NavigationItem {
     id: Section;

@@ -1,0 +1,105 @@
+/* VisualEditor Component Styles */
+
+.visual-editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: var(--editor-bg);
+    overflow: hidden;
+}
+
+.visual-editor__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; /* Allows flex item to shrink below content size */
+}
+
+.visual-editor__toolbar {
+    flex-shrink: 0;
+    border-bottom: var(--panel-separator);
+    background: var(--toolbar-bg);
+    z-index: 10;
+}
+
+.visual-editor__canvas {
+    flex: 1;
+    background: var(--canvas-bg);
+    position: relative;
+}
+
+/* Sidebar Panels */
+.visual-editor__left-panel,
+.visual-editor__right-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--panel-bg);
+    border: var(--panel-border);
+    min-width: 280px;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.visual-editor__left-panel {
+    border-right: var(--panel-separator);
+}
+
+.visual-editor__right-panel {
+    border-left: var(--panel-separator);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .visual-editor__left-panel,
+    .visual-editor__right-panel {
+        min-width: 240px;
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 768px) {
+    .visual-editor {
+        flex-direction: column;
+    }
+
+    .visual-editor__left-panel,
+    .visual-editor__right-panel {
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 40vh;
+        border: none;
+        border-top: var(--panel-separator);
+    }
+
+    .visual-editor__left-panel {
+        order: 2;
+    }
+
+    .visual-editor__main {
+        order: 1;
+    }
+
+    .visual-editor__right-panel {
+        order: 3;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .visual-editor__toolbar,
+    .visual-editor__left-panel,
+    .visual-editor__right-panel {
+        border-width: 2px;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .visual-editor * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
