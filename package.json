@@ -5,12 +5,12 @@
     "type": "module",
     "scripts": {
         "dev": "bun --hot server/index.tsx",
-        "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-        "start": "NODE_ENV=production bun server/index.tsx",
-        "test": "vitest --config vitest.unit.config.ts",
-        "test:run": "vitest run --config vitest.unit.config.ts",
-        "test:ui": "vitest --ui --config vitest.unit.config.ts",
-        "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+        "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.BUN_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+        "start": "BUN_ENV=production bun server/index.tsx",
+        "test": "bun x vitest --config vitest.unit.config.ts",
+        "test:run": "bun x vitest run --config vitest.unit.config.ts",
+        "test:ui": "bun x vitest --ui --config vitest.unit.config.ts",
+        "test:coverage": "bun x vitest run --coverage --config vitest.unit.config.ts",
         "clean": "rm -rf node_modules dist bun.lock"
     },
     "engines": {
@@ -29,10 +29,13 @@
         "@types/bun": "latest",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "jsdom": "27.0.0",
-        "vitest": "^3.2.4",
+        "@vitejs/plugin-react": "^5.0.2",
         "@vitest/browser": "^3.2.4",
+        "@vitest/coverage-v8": "^3.2.4",
+        "happy-dom": "^18.0.1",
+        "jsdom": "27.0.0",
         "playwright": "^1.55.0",
-        "@vitest/coverage-v8": "^3.2.4"
+        "vite": "^7.1.5",
+        "vitest": "^3.2.4"
     }
 }

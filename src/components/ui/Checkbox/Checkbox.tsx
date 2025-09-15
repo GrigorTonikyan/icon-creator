@@ -7,9 +7,11 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
     className?: string;
     error?: string;
     id?: string;
+    role?: string;
+    "aria-checked"?: boolean;
 }
 
-export function Checkbox({ label, className, error, id, ...props }: CheckboxProps) {
+export function Checkbox({ label, className, error, id, role, "aria-checked": ariaChecked, ...props }: CheckboxProps) {
     const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
     const wrapperCn = cn("Checkbox", className, {
@@ -17,10 +19,16 @@ export function Checkbox({ label, className, error, id, ...props }: CheckboxProp
         "Checkbox--disabled": props.disabled,
     });
 
+    const inputProps = {
+        ...props,
+        ...(role && { role }),
+        ...(ariaChecked !== undefined && { "aria-checked": ariaChecked }),
+    };
+
     return (
         <div className={wrapperCn}>
             <div className="Checkbox__input-wrapper">
-                <input type="checkbox" id={checkboxId} className="Checkbox__input" {...props} />
+                <input type="checkbox" id={checkboxId} className="Checkbox__input" {...inputProps} />
                 <span className="Checkbox__checkmark" />
             </div>
             {label && (
@@ -28,7 +36,11 @@ export function Checkbox({ label, className, error, id, ...props }: CheckboxProp
                     {label}
                 </label>
             )}
-            {error && <span className="Checkbox__error">{error}</span>}
+            {error && (
+                <span className="Checkbox__error" role="alert">
+                    {error}
+                </span>
+            )}
         </div>
     );
 }

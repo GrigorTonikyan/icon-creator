@@ -8,6 +8,11 @@
     grid-template-columns: var(--aside-L-W) 1fr var(--aside-R-W);
     grid-template-rows: 80px 1fr 120px;
 
+    grid-template-areas:
+        "navbar navbar navbar"
+        "aside-l main aside-r"
+        ". footer .";
+
     transition: grid var(--transition-slow);
 
     > header {

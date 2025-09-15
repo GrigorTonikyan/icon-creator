@@ -1,0 +1,109 @@
+.ErrorBoundary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    color: #991b1b;
+}
+
+.ErrorBoundary__content {
+    text-align: center;
+    max-width: 500px;
+}
+
+.ErrorBoundary__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #7f1d1d;
+}
+
+.ErrorBoundary__message {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    color: #991b1b;
+}
+
+.ErrorBoundary__details {
+    margin: 1rem 0;
+    text-align: left;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    background: #fef2f2;
+}
+
+.ErrorBoundary__details summary {
+    padding: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fee2e2;
+    border-bottom: 1px solid #fca5a5;
+}
+
+.ErrorBoundary__details summary:hover {
+    background: #fecaca;
+}
+
+.ErrorBoundary__stack {
+    padding: 1rem;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    background: #fef2f2;
+    color: #7f1d1d;
+    margin: 0;
+}
+
+.ErrorBoundary__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ErrorBoundary__actions .Button {
+    min-width: 120px;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+    .ErrorBoundary {
+        background: linear-gradient(135deg, #450a0a, #7f1d1d);
+        border-color: #991b1b;
+        color: #fca5a5;
+    }
+
+    .ErrorBoundary__title {
+        color: #fef2f2;
+    }
+
+    .ErrorBoundary__message {
+        color: #fca5a5;
+    }
+
+    .ErrorBoundary__details {
+        border-color: #991b1b;
+        background: #450a0a;
+    }
+
+    .ErrorBoundary__details summary {
+        background: #7f1d1d;
+        border-color: #991b1b;
+        color: #fef2f2;
+    }
+
+    .ErrorBoundary__details summary:hover {
+        background: #991b1b;
+    }
+
+    .ErrorBoundary__stack {
+        background: #450a0a;
+        color: #fca5a5;
+    }
+}

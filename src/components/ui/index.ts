@@ -10,5 +10,8 @@ export type { CheckboxProps } from "./Checkbox/Checkbox";
 export { Icon } from "./Icon/Icon";
 export type { IconName, IconProps } from "./Icon/Icon";
 
+export { SkipLink } from "./SkipLink/SkipLink";
+export type { SkipLinkProps } from "./SkipLink/SkipLink";
+
 export { FormField } from "./FormField/FormField";
 export type { FormFieldProps } from "./FormField/FormField";

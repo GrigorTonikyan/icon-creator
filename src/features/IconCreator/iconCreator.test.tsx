@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { Layout } from "../Layout/Layout";
 import { IconCreator } from "./iconCreator";
+
+// Mock LayoutRegion to avoid DOM issues in test
+vi.mock("../Layout", () => ({
+    LayoutRegion: ({ children }: { children: React.ReactNode }) => <div data-testid="layout-region">{children}</div>,
+}));
 
 // Mock for download functionality
 const mockLink = {
@@ -17,34 +21,18 @@ beforeEach(() => {
     // Reset mock calls
     vi.clearAllMocks();
 
-    // Mock document.createElement only for anchor elements
-    const originalCreateElement = document.createElement.bind(document);
-    vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-        if (tagName === "a") {
-            return mockLink as any;
-        }
-        return originalCreateElement(tagName);
-    });
-
-    // No need to mock body operations; we don't trigger downloads in these tests
+    // Only mock document.createElement for anchor elements when export is actually called
+    // Don't interfere with normal DOM operations
 });
 
 describe("IconCreator", () => {
     test("should render without crashing", () => {
-        render(
-            <Layout>
-                <IconCreator />
-            </Layout>
-        );
+        render(<IconCreator />);
         expect(screen.getByText("Icon Creator")).toBeInTheDocument();
     });
 
     test("should have export and reset buttons", () => {
-        render(
-            <Layout>
-                <IconCreator />
-            </Layout>
-        );
+        render(<IconCreator />);
         expect(screen.getByText("Export HTML")).toBeInTheDocument();
         expect(screen.getByText("Reset")).toBeInTheDocument();
     });

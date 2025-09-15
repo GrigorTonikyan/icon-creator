@@ -1,5 +1,6 @@
 import cn from "classnames";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef } from "react";
 import "./Button.css";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "icon";
@@ -13,25 +14,28 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     isLoading?: boolean;
 }
 
-export function Button({
-    variant = "primary",
-    size = "md",
-    children,
-    className,
-    isLoading = false,
-    disabled,
-    ...props
-}: ButtonProps) {
-    const buttonCn = cn("Button", className, {
-        [`Button--${variant}`]: variant,
-        [`Button--${size}`]: size,
-        "Button--loading": isLoading,
-        "Button--disabled": disabled || isLoading,
-    });
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ variant = "primary", size = "md", children, className, isLoading = false, disabled, ...props }, ref) => {
+        const buttonCn = cn("Button", className, {
+            [`Button--${variant}`]: variant,
+            [`Button--${size}`]: size,
+            "Button--loading": isLoading,
+            "Button--disabled": disabled || isLoading,
+        });
 
-    return (
-        <button className={buttonCn} disabled={disabled || isLoading} {...props}>
-            {isLoading ? <span className="Button__spinner" /> : <span>{children}</span>}
-        </button>
-    );
-}
+        return (
+            <button ref={ref} className={buttonCn} disabled={disabled || isLoading} {...props}>
+                {isLoading ? (
+                    <>
+                        <span className="Button__spinner" />
+                        <span className="sr-only">Loading...</span>
+                    </>
+                ) : (
+                    <span>{children}</span>
+                )}
+            </button>
+        );
+    }
+);
+
+Button.displayName = "Button";

@@ -1,5 +1,7 @@
 import { type FC, useState } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NavBar } from "./components/NavBar";
+import { SkipLink } from "./components/ui/SkipLink/SkipLink";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { APITester } from "./features/APITester/APITester";
 import { IconCreator } from "./features/IconCreator/iconCreator";
@@ -30,15 +32,27 @@ export const App: FC = () => {
     });
 
     return (
-        <ThemeProvider>
-            <div className={appRootCn}>
-                <Layout>
-                    <LayoutRegion name="navbar">
-                        <NavBar currentSection={currentSection} onSectionChange={setCurrentSection} />
-                    </LayoutRegion>
-                    <LayoutRegion name="main">{renderCurrentSection()}</LayoutRegion>
-                </Layout>
-            </div>
-        </ThemeProvider>
+        <ErrorBoundary>
+            <ThemeProvider>
+                <div className={appRootCn}>
+                    <SkipLink href="#main-content">Skip to main content</SkipLink>
+                    <SkipLink href="#navigation">Skip to navigation</SkipLink>
+                    <Layout>
+                        <LayoutRegion name="navbar">
+                            <ErrorBoundary fallback={<div>Navigation unavailable</div>}>
+                                <div id="navigation">
+                                    <NavBar currentSection={currentSection} onSectionChange={setCurrentSection} />
+                                </div>
+                            </ErrorBoundary>
+                        </LayoutRegion>
+                        <LayoutRegion name="main">
+                            <ErrorBoundary fallback={<div>Content unavailable</div>}>
+                                <div id="main-content">{renderCurrentSection()}</div>
+                            </ErrorBoundary>
+                        </LayoutRegion>
+                    </Layout>
+                </div>
+            </ThemeProvider>
+        </ErrorBoundary>
     );
 };

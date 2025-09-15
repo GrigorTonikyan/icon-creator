@@ -46,9 +46,22 @@ export function Input(props: InputProps) {
     });
 
     const renderInput = () => {
+        const baseProps = {
+            id: inputId,
+            className: inputCn,
+            ...(error && { "aria-describedby": `${inputId}-error`, "aria-invalid": true as const }),
+        };
+
         switch (variant) {
             case "color":
-                return <input {...(inputProps as ColorInputProps)} type="color" id={inputId} className={inputCn} />;
+                return (
+                    <input
+                        {...(inputProps as ColorInputProps)}
+                        type="color"
+                        {...baseProps}
+                        aria-label={label || "Color picker"}
+                    />
+                );
             case "range":
                 const rangeProps = props as RangeInputProps;
                 const { showValue, ...rangeInputProps } = rangeProps;
@@ -63,20 +76,25 @@ export function Input(props: InputProps) {
 
                 return (
                     <div className="Input__range-container">
-                        <input {...rangeInputProps} type="range" id={inputId} className={inputCn} />
-                        {showValue && <span className="Input__range-value">{formatValue(rangeProps.value)}</span>}
+                        <input
+                            {...rangeInputProps}
+                            type="range"
+                            {...baseProps}
+                            aria-valuemin={rangeProps.min}
+                            aria-valuemax={rangeProps.max}
+                            aria-valuenow={Number(rangeProps.value || rangeProps.defaultValue || rangeProps.min || 0)}
+                            aria-valuetext={formatValue(rangeProps.value)}
+                        />
+                        {showValue && (
+                            <span className="Input__range-value" aria-hidden="true">
+                                {formatValue(rangeProps.value)}
+                            </span>
+                        )}
                     </div>
                 );
             default:
                 const textProps = props as TextInputProps;
-                return (
-                    <input
-                        {...(inputProps as TextInputProps)}
-                        type={textProps.type || "text"}
-                        id={inputId}
-                        className={inputCn}
-                    />
-                );
+                return <input {...(inputProps as TextInputProps)} type={textProps.type || "text"} {...baseProps} />;
         }
     };
 
@@ -88,7 +106,11 @@ export function Input(props: InputProps) {
                 </label>
             )}
             {renderInput()}
-            {error && <span className="Input__error">{error}</span>}
+            {error && (
+                <span className="Input__error" role="alert" aria-live="polite" id={`${inputId}-error`}>
+                    {error}
+                </span>
+            )}
         </div>
     );
 }

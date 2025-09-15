@@ -1,45 +1,119 @@
-import { useEffect, useRef, useState, type FC, type FormEvent } from "react";
-
 import cn from "classnames";
-import { Button, Input } from "../../components/ui";
+import type { SyntheticEvent } from "react";
+import { useRef, useState } from "react";
+import { Button } from "../../components/ui/Button/Button";
+import { Input } from "../../components/ui/Input/Input";
 import "./APITester.css";
+
+interface RequestStatus {
+    status: number;
+    statusText: string;
+}
 
 interface APITesterProps {
     className?: string;
 }
 
-export const APITester: FC<APITesterProps> = ({ className }) => {
+export const APITester = ({ className }: APITesterProps) => {
     const responseInputRef = useRef<HTMLTextAreaElement>(null);
-    const [status, setStatus] = useState({ status: 0, statusText: "" });
+    const [status, setStatus] = useState<RequestStatus>({ status: 0, statusText: "" });
+    const [endpointError, setEndpointError] = useState<string>("");
 
-    const apiTesterCn = cn("APITester", className);
+    const apiTesterCn = cn("api-tester", className);
 
-    useEffect(() => {
-        if (!status.status) return;
-    }, [status]);
-
-    const testEndpoint = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const validateEndpoint = (endpoint: string): string => {
+        if (!endpoint.trim()) {
+            return "API endpoint is required";
+        }
 
         try {
-            const form = e.currentTarget;
-            const formData = new FormData(form);
-            const endpoint = formData.get("endpoint") as string;
-            const url = new URL(endpoint, location.href);
-            const method = formData.get("method") as string;
-            const res = await fetch(url, { method });
+            // Check if it's a valid URL format
+            if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+                new URL(endpoint);
+            } else if (endpoint.startsWith("/")) {
+                // Relative URL is valid
+                return "";
+            } else {
+                return "Please enter a valid URL (starting with http://, https://, or /)";
+            }
+        } catch {
+            return "Please enter a valid URL format";
+        }
+
+        return "";
+    };
+
+    const testEndpoint = async (event: SyntheticEvent) => {
+        event.preventDefault();
+        if (!responseInputRef.current) return;
+
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const method = formData.get("method") as string;
+        const endpoint = formData.get("endpoint") as string;
+
+        // Validate endpoint
+        const validationError = validateEndpoint(endpoint);
+        if (validationError) {
+            setEndpointError(validationError);
+            return;
+        }
+
+        // Clear any previous validation errors
+        setEndpointError("");
+
+        setStatus({ status: 0, statusText: "Loading" });
+        responseInputRef.current.value = "Loading...";
+
+        try {
+            const url = endpoint.startsWith("/") ? `${window.location.origin}${endpoint}` : endpoint;
+            const res = await fetch(new URL(url), { method });
 
             setStatus({
-                status: res?.status,
-                statusText: res?.statusText,
+                status: res.status,
+                statusText: res.statusText,
             });
 
-            console.log(res);
-            const data = await res.json();
+            if (!res.ok) {
+                const errorText = await res.text();
+                responseInputRef.current.value = JSON.stringify(
+                    {
+                        error: `HTTP ${res.status} ${res.statusText}`,
+                        message: errorText || "Request failed",
+                        status: res.status,
+                        statusText: res.statusText,
+                    },
+                    null,
+                    2
+                );
+                return;
+            }
 
-            responseInputRef.current!.value = JSON.stringify(data, null, 2);
+            const contentType = res.headers.get("content-type");
+            if (contentType?.includes("application/json")) {
+                const data = await res.json();
+                responseInputRef.current.value = JSON.stringify(data, null, 2);
+            } else {
+                const text = await res.text();
+                responseInputRef.current.value = text;
+            }
         } catch (error) {
-            responseInputRef.current!.value = String(error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+
+            setStatus({
+                status: 0,
+                statusText: "Error",
+            });
+
+            responseInputRef.current.value = JSON.stringify(
+                {
+                    error: "Request failed",
+                    message: errorMessage,
+                    timestamp: new Date().toISOString(),
+                },
+                null,
+                2
+            );
         }
     };
 
@@ -67,6 +141,8 @@ export const APITester: FC<APITesterProps> = ({ className }) => {
                     defaultValue="/api/hello"
                     className="url-input"
                     placeholder="/api/hello"
+                    error={endpointError}
+                    aria-label="API endpoint URL"
                 />
                 <Button type="submit" className="send-button">
                     Send

@@ -11,18 +11,25 @@ Object.defineProperty(globalThis, "fetch", {
 });
 
 // Mock URL constructor for endpoint validation
-Object.defineProperty(globalThis, "URL", {
-    value: vi.fn().mockImplementation((url) => {
+const MockedURL = class URL {
+    href: string;
+    protocol: string;
+    hostname: string;
+    pathname: string;
+
+    constructor(url: string) {
         if (typeof url !== "string" || !url.includes("://")) {
             throw new TypeError("Invalid URL");
         }
-        return {
-            href: url,
-            protocol: url.split("://")[0] + ":",
-            hostname: url.split("://")[1]?.split("/")[0] || "",
-            pathname: "/" + (url.split("://")[1]?.split("/").slice(1).join("/") || ""),
-        };
-    }),
+        this.href = url;
+        this.protocol = url.split("://")[0] + ":";
+        this.hostname = url.split("://")[1]?.split("/")[0] || "";
+        this.pathname = "/" + (url.split("://")[1]?.split("/").slice(1).join("/") || "");
+    }
+};
+
+Object.defineProperty(globalThis, "URL", {
+    value: MockedURL,
     writable: true,
 });
 
@@ -45,9 +52,17 @@ describe("APITester", () => {
 
         // Mock successful API response
         mockFetch.mockResolvedValueOnce({
+            ok: true,
             status: 200,
             statusText: "OK",
+            headers: {
+                get: vi.fn((name: string) => {
+                    if (name === "content-type") return "application/json";
+                    return null;
+                }),
+            },
             json: vi.fn().mockResolvedValueOnce({ message: "Hello, world!" }),
+            text: vi.fn().mockResolvedValueOnce(JSON.stringify({ message: "Hello, world!" })),
         });
 
         render(<APITester />);
@@ -71,9 +86,17 @@ describe("APITester", () => {
         const mockResponseData = { message: "Hello, world!", status: "success" };
 
         mockFetch.mockResolvedValueOnce({
+            ok: true,
             status: 200,
             statusText: "OK",
+            headers: {
+                get: vi.fn((name: string) => {
+                    if (name === "content-type") return "application/json";
+                    return null;
+                }),
+            },
             json: vi.fn().mockResolvedValueOnce(mockResponseData),
+            text: vi.fn().mockResolvedValueOnce(JSON.stringify(mockResponseData)),
         });
 
         const { container } = render(<APITester />);
@@ -105,9 +128,13 @@ describe("APITester", () => {
         const user = userEvent.setup();
 
         mockFetch.mockResolvedValueOnce({
+            ok: false,
             status: 404,
             statusText: "Not Found",
-            json: vi.fn().mockResolvedValueOnce({ error: "Not found" }),
+            headers: {
+                get: vi.fn().mockReturnValue(null),
+            },
+            text: vi.fn().mockResolvedValueOnce("Not found"),
         });
 
         const { container } = render(<APITester />);
@@ -130,6 +157,18 @@ describe("APITester", () => {
             },
             { container }
         );
+
+        // Check that the error response is in the new structured format
+        const expectedErrorResponse = {
+            error: "HTTP 404 Not Found",
+            message: "Not found",
+            status: 404,
+            statusText: "Not Found",
+        };
+
+        await waitFor(() => {
+            expect(responseArea).toHaveValue(JSON.stringify(expectedErrorResponse, null, 2));
+        });
     });
 
     test("should handle network errors correctly", async () => {
@@ -154,7 +193,11 @@ describe("APITester", () => {
         // Assert
         await waitFor(
             () => {
-                expect(responseArea).toHaveValue(`Error: ${errorMessage}`);
+                const responseValue = (responseArea as HTMLTextAreaElement).value;
+                const parsedResponse = JSON.parse(responseValue);
+                expect(parsedResponse.error).toBe("Request failed");
+                expect(parsedResponse.message).toBe(errorMessage);
+                expect(parsedResponse.timestamp).toBeDefined();
             },
             { container }
         );
@@ -164,9 +207,17 @@ describe("APITester", () => {
         const user = userEvent.setup();
 
         mockFetch.mockResolvedValueOnce({
+            ok: true,
             status: 200,
             statusText: "OK",
+            headers: {
+                get: vi.fn((name: string) => {
+                    if (name === "content-type") return "application/json";
+                    return null;
+                }),
+            },
             json: vi.fn().mockResolvedValueOnce({ method: "PUT" }),
+            text: vi.fn().mockResolvedValueOnce(JSON.stringify({ method: "PUT" })),
         });
 
         render(<APITester />);
@@ -197,9 +248,17 @@ describe("APITester", () => {
         const customEndpoint = "https://api.example.com/custom";
 
         mockFetch.mockResolvedValueOnce({
+            ok: true,
             status: 200,
             statusText: "OK",
+            headers: {
+                get: vi.fn((name: string) => {
+                    if (name === "content-type") return "application/json";
+                    return null;
+                }),
+            },
             json: vi.fn().mockResolvedValueOnce({ endpoint: customEndpoint }),
+            text: vi.fn().mockResolvedValueOnce(JSON.stringify({ endpoint: customEndpoint })),
         });
 
         render(<APITester />);
@@ -232,10 +291,64 @@ describe("APITester", () => {
     test("should have proper default placeholder text", () => {
         render(<APITester />);
 
-        const urlInput = screen.getByPlaceholderText("/api/hello");
-        const responseArea = screen.getByPlaceholderText("Response will appear here...");
+        const endpointInput = screen.getByLabelText("API Endpoint");
+        expect(endpointInput).toHaveAttribute("placeholder", "/api/hello");
 
-        expect(urlInput).toBeInTheDocument();
-        expect(responseArea).toBeInTheDocument();
+        const responseArea = screen.getByLabelText("API Response");
+        expect(responseArea).toHaveAttribute("placeholder", "Response will appear here...");
+    });
+
+    test("should validate endpoint URL and show error message", async () => {
+        const user = userEvent.setup();
+
+        render(<APITester />);
+
+        const sendButton = screen.getByRole("button", { name: /send/i });
+        const endpointInput = screen.getByLabelText("API Endpoint");
+
+        // Test empty endpoint validation
+        await user.clear(endpointInput);
+        await user.click(sendButton);
+
+        await waitFor(() => {
+            expect(screen.getByText("API endpoint is required")).toBeInTheDocument();
+        });
+
+        // Test invalid URL format validation
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "invalid-url");
+        await user.click(sendButton);
+
+        await waitFor(() => {
+            expect(
+                screen.getByText("Please enter a valid URL (starting with http://, https://, or /)")
+            ).toBeInTheDocument();
+        });
+
+        // Test that valid relative URL clears error
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            headers: {
+                get: vi.fn((name: string) => {
+                    if (name === "content-type") return "application/json";
+                    return null;
+                }),
+            },
+            json: vi.fn().mockResolvedValueOnce({ status: "success" }),
+            text: vi.fn().mockResolvedValueOnce(JSON.stringify({ status: "success" })),
+        });
+
+        await user.clear(endpointInput);
+        await user.type(endpointInput, "/api/valid");
+        await user.click(sendButton);
+
+        await waitFor(() => {
+            expect(screen.queryByText("API endpoint is required")).not.toBeInTheDocument();
+            expect(
+                screen.queryByText("Please enter a valid URL (starting with http://, https://, or /)")
+            ).not.toBeInTheDocument();
+        });
     });
 });
