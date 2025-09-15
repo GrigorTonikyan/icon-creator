@@ -10,7 +10,8 @@
         "test": "vitest --config vitest.unit.config.ts",
         "test:run": "vitest run --config vitest.unit.config.ts",
         "test:ui": "vitest --ui --config vitest.unit.config.ts",
-        "test:coverage": "vitest run --coverage --config vitest.unit.config.ts"
+        "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+        "clean": "rm -rf node_modules dist bun.lock"
     },
     "engines": {
         "bun": ">=1.2.0"
