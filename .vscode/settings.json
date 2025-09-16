@@ -1,1 +1,6 @@
-{}
+{
+    "github.copilot.chat.customInstructionsInSystemMessage": true,
+    "chat.agent.maxRequests": 256,
+    "cSpell.words": ["rgba", "webp"],
+    "typescript.experimental.useTsgo": true
+}

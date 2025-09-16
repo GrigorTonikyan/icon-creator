@@ -1,0 +1,195 @@
+.PrecisionInputs {
+    padding: 1rem;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-bg-secondary);
+}
+
+.precision-inputs__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.precision-inputs__title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.precision-inputs__mouse-position {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.precision-inputs__coordinates {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.precision-inputs__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.precision-inputs__section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.precision-inputs__section-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.precision-inputs__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.precision-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.precision-field__input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.precision-field__input {
+    flex: 1;
+    padding-right: 2rem; /* Space for unit label */
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    text-align: right;
+}
+
+.precision-field__input--error {
+    border-color: var(--color-error);
+    background-color: var(--color-error-bg);
+}
+
+.precision-field__unit {
+    position: absolute;
+    right: 0.5rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+    user-select: none;
+}
+
+.precision-inputs__aspect-ratio {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.25rem;
+}
+
+.precision-inputs__aspect-button {
+    padding: 0.25rem 0.5rem;
+    font-size: var(--font-size-xs);
+    min-width: auto;
+}
+
+.precision-inputs__multi-selection {
+    padding: 0.75rem;
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+}
+
+.precision-inputs__multi-text {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.precision-inputs__multi-note {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.precision-inputs__empty {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.precision-inputs__empty-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    margin: 0;
+    font-style: italic;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .precision-inputs__coordinates {
+    color: var(--color-text-quaternary);
+}
+
+[data-theme="dark"] .precision-field__input--error {
+    background-color: var(--color-error-bg-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .precision-inputs__row {
+        grid-template-columns: 1fr;
+    }
+
+    .precision-inputs__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Focus and interaction states */
+.precision-field__input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+.precision-field__input:hover:not(:disabled) {
+    border-color: var(--color-border-hover);
+}
+
+.precision-field__input:disabled {
+    background-color: var(--color-bg-disabled);
+    color: var(--color-text-disabled);
+    cursor: not-allowed;
+}
+
+/* Compact layout for smaller spaces */
+.PrecisionInputs--compact {
+    padding: 0.75rem;
+}
+
+.PrecisionInputs--compact .precision-inputs__content {
+    gap: 0.75rem;
+}
+
+.PrecisionInputs--compact .precision-inputs__section {
+    gap: 0.375rem;
+}
+
+.PrecisionInputs--compact .precision-inputs__row {
+    gap: 0.375rem;
+}

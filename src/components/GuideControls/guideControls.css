@@ -1,0 +1,108 @@
+.GuideControls {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.guide-controls-header {
+    margin-bottom: 16px;
+}
+
+.guide-controls-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.guide-controls-section {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.guide-controls-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.guide-controls-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.snap-threshold-input {
+    width: 60px;
+    margin-right: 8px;
+}
+
+.guide-controls-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.add-guide-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.guide-type-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+    min-width: 80px;
+}
+
+.guide-type-select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.guide-position-input {
+    width: 80px;
+}
+
+.add-guide-button {
+    min-width: 50px;
+}
+
+.guide-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.guide-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.clear-guides-button {
+    min-width: 70px;
+}
+
+.guide-controls-hint {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.guide-controls-hint p {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}

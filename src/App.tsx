@@ -1,8 +1,15 @@
 import { type FC, useState } from "react";
+import { AlignmentControls } from "./components/AlignmentControls";
+import { CrashRecoveryDialog } from "./components/CrashRecoveryDialog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { GridControls } from "./components/GridControls";
+import { GuideControls } from "./components/GuideControls";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { LayerPanel } from "./components/LayerPanel";
 import { NavBar } from "./components/NavBar";
+import { PrecisionInputs } from "./components/PrecisionInputs";
 import { PropertyPanel } from "./components/PropertyPanel";
+import { RulerControls } from "./components/RulerControls";
 import { SkipLink } from "./components/ui/SkipLink/SkipLink";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -48,7 +55,29 @@ export const App: FC = () => {
         if (currentSection === "visual-editor") {
             return (
                 <aside className="visual-editor__right-panel">
-                    <PropertyPanel />
+                    <div className="visual-editor__right-panel-content">
+                        <div className="visual-editor__grid-section">
+                            <GridControls />
+                        </div>
+                        <div className="visual-editor__guide-section">
+                            <GuideControls />
+                        </div>
+                        <div className="visual-editor__ruler-section">
+                            <RulerControls />
+                        </div>
+                        <div className="visual-editor__alignment-section">
+                            <AlignmentControls />
+                        </div>
+                        <div className="visual-editor__precision-section">
+                            <PrecisionInputs />
+                        </div>
+                        <div className="visual-editor__properties-section">
+                            <PropertyPanel />
+                        </div>
+                        <div className="visual-editor__history-section">
+                            <HistoryPanel />
+                        </div>
+                    </div>
                 </aside>
             );
         }
@@ -92,7 +121,10 @@ export const App: FC = () => {
                     <SkipLink href="#main-content">Skip to main content</SkipLink>
                     <SkipLink href="#navigation">Skip to navigation</SkipLink>
                     {currentSection === "visual-editor" ? (
-                        <EditorProvider>{layoutContent}</EditorProvider>
+                        <EditorProvider>
+                            {layoutContent}
+                            <CrashRecoveryDialog />
+                        </EditorProvider>
                     ) : (
                         layoutContent
                     )}

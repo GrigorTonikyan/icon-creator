@@ -50,6 +50,34 @@
     border-left: var(--panel-separator);
 }
 
+/* Right Panel Content Layout */
+.visual-editor__right-panel-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 1px;
+}
+
+.visual-editor__grid-section {
+    flex: 0 0 auto;
+    border-bottom: var(--panel-separator);
+    overflow: hidden;
+}
+
+.visual-editor__properties-section {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.visual-editor__history-section {
+    flex: 0 0 300px; /* Fixed height for history panel */
+    min-height: 200px;
+    max-height: 400px;
+    border-top: var(--panel-separator);
+    overflow: hidden;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .visual-editor__left-panel,
@@ -84,6 +112,28 @@
 
     .visual-editor__right-panel {
         order: 3;
+    }
+
+    /* Mobile adjustments for right panel */
+    .visual-editor__right-panel-content {
+        flex-direction: row;
+        height: auto;
+        max-height: 40vh;
+    }
+
+    .visual-editor__grid-section,
+    .visual-editor__properties-section,
+    .visual-editor__history-section {
+        flex: 1;
+        min-height: 200px;
+        max-height: none;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    .visual-editor__properties-section,
+    .visual-editor__history-section {
+        border-left: var(--panel-separator);
     }
 }
 

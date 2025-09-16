@@ -1,0 +1,103 @@
+.AlignmentControls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    min-width: 280px;
+}
+
+.alignment-controls-header {
+    margin-bottom: var(--spacing-xs);
+}
+
+.alignment-controls-header h3 {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.alignment-controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.alignment-controls-section:last-of-type {
+    border-bottom: none;
+}
+
+.alignment-controls-section h4 {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.alignment-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xs);
+}
+
+.alignment-button {
+    min-width: 36px !important;
+    height: 36px !important;
+    font-size: var(--font-size-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.alignment-button:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+    color: var(--color-primary-text);
+}
+
+.alignment-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.distribution-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.distribution-button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+}
+
+.distribution-button:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+    color: var(--color-primary-text);
+}
+
+.distribution-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.alignment-controls-info {
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.alignment-controls-info small {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-style: italic;
+    display: block;
+    text-align: center;
+}

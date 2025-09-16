@@ -1,0 +1,626 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://icon-creator.app/schemas/project-v1.0.0.json",
+    "title": "Icon Creator Project",
+    "description": "JSON schema for Icon Creator project files",
+    "type": "object",
+    "required": ["metadata", "editorState"],
+    "properties": {
+        "metadata": {
+            "$ref": "#/definitions/ProjectMetadata"
+        },
+        "editorState": {
+            "$ref": "#/definitions/SerializableEditorState"
+        },
+        "historySnapshot": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/HistoryEntry"
+            },
+            "maxItems": 50
+        },
+        "customData": {
+            "type": "object",
+            "additionalProperties": true
+        }
+    },
+    "additionalProperties": false,
+    "definitions": {
+        "ProjectMetadata": {
+            "type": "object",
+            "required": ["id", "name", "version", "createdAt", "lastModified"],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]+$",
+                    "maxLength": 100
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                },
+                "version": {
+                    "type": "string",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                },
+                "createdAt": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "lastModified": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "maxItems": 20
+                },
+                "thumbnailData": {
+                    "type": "string",
+                    "pattern": "^data:image\\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$"
+                },
+                "author": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "license": {
+                    "type": "string",
+                    "maxLength": 200
+                }
+            },
+            "additionalProperties": false
+        },
+        "SerializableEditorState": {
+            "type": "object",
+            "required": [
+                "objects",
+                "layers",
+                "layerOrder",
+                "selection",
+                "layerSelection",
+                "viewport",
+                "selectedTool",
+                "gridVisible",
+                "snapToGrid",
+                "gridSize"
+            ],
+            "properties": {
+                "objects": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": {
+                            "$ref": "#/definitions/CanvasObject"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "layers": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": {
+                            "$ref": "#/definitions/Layer"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "layerOrder": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "selection": {
+                    "$ref": "#/definitions/Selection"
+                },
+                "layerSelection": {
+                    "$ref": "#/definitions/LayerSelection"
+                },
+                "viewport": {
+                    "$ref": "#/definitions/ViewportState"
+                },
+                "selectedTool": {
+                    "$ref": "#/definitions/ToolType"
+                },
+                "gridVisible": {
+                    "type": "boolean"
+                },
+                "snapToGrid": {
+                    "type": "boolean"
+                },
+                "gridSize": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 100
+                }
+            },
+            "additionalProperties": false
+        },
+        "Transform": {
+            "type": "object",
+            "required": ["x", "y", "rotation", "scaleX", "scaleY"],
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "rotation": {
+                    "type": "number",
+                    "minimum": -360,
+                    "maximum": 360
+                },
+                "scaleX": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 100
+                },
+                "scaleY": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 100
+                },
+                "originX": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "originY": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "additionalProperties": false
+        },
+        "CanvasObject": {
+            "oneOf": [
+                { "$ref": "#/definitions/RectangleObject" },
+                { "$ref": "#/definitions/CircleObject" },
+                { "$ref": "#/definitions/TextObject" },
+                { "$ref": "#/definitions/PathObject" },
+                { "$ref": "#/definitions/GroupObject" }
+            ]
+        },
+        "BaseCanvasObject": {
+            "type": "object",
+            "required": ["id", "type", "name", "transform", "visible", "locked", "opacity", "zIndex", "layerId"],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "transform": {
+                    "$ref": "#/definitions/Transform"
+                },
+                "visible": {
+                    "type": "boolean"
+                },
+                "locked": {
+                    "type": "boolean"
+                },
+                "opacity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "zIndex": {
+                    "type": "number"
+                },
+                "layerId": {
+                    "type": "string"
+                }
+            }
+        },
+        "RectangleObject": {
+            "allOf": [
+                { "$ref": "#/definitions/BaseCanvasObject" },
+                {
+                    "type": "object",
+                    "required": ["type", "width", "height", "style"],
+                    "properties": {
+                        "type": {
+                            "const": "rectangle"
+                        },
+                        "width": {
+                            "type": "number",
+                            "minimum": 0.1
+                        },
+                        "height": {
+                            "type": "number",
+                            "minimum": 0.1
+                        },
+                        "borderRadius": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "style": {
+                            "$ref": "#/definitions/ShapeStyle"
+                        }
+                    }
+                }
+            ]
+        },
+        "CircleObject": {
+            "allOf": [
+                { "$ref": "#/definitions/BaseCanvasObject" },
+                {
+                    "type": "object",
+                    "required": ["type", "radius", "style"],
+                    "properties": {
+                        "type": {
+                            "const": "circle"
+                        },
+                        "radius": {
+                            "type": "number",
+                            "minimum": 0.1
+                        },
+                        "style": {
+                            "$ref": "#/definitions/ShapeStyle"
+                        }
+                    }
+                }
+            ]
+        },
+        "TextObject": {
+            "allOf": [
+                { "$ref": "#/definitions/BaseCanvasObject" },
+                {
+                    "type": "object",
+                    "required": [
+                        "type",
+                        "content",
+                        "fontSize",
+                        "fontFamily",
+                        "fontWeight",
+                        "fontStyle",
+                        "textAlign",
+                        "style"
+                    ],
+                    "properties": {
+                        "type": {
+                            "const": "text"
+                        },
+                        "content": {
+                            "type": "string",
+                            "maxLength": 10000
+                        },
+                        "fontSize": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 1000
+                        },
+                        "fontFamily": {
+                            "type": "string",
+                            "maxLength": 100
+                        },
+                        "fontWeight": {
+                            "enum": ["normal", "bold", "100", "200", "300", "400", "500", "600", "700", "800", "900"]
+                        },
+                        "fontStyle": {
+                            "enum": ["normal", "italic", "oblique"]
+                        },
+                        "textAlign": {
+                            "enum": ["left", "center", "right", "justify"]
+                        },
+                        "style": {
+                            "$ref": "#/definitions/TextStyle"
+                        }
+                    }
+                }
+            ]
+        },
+        "PathObject": {
+            "allOf": [
+                { "$ref": "#/definitions/BaseCanvasObject" },
+                {
+                    "type": "object",
+                    "required": ["type", "pathData", "style"],
+                    "properties": {
+                        "type": {
+                            "const": "path"
+                        },
+                        "pathData": {
+                            "type": "string",
+                            "pattern": "^[MmLlHhVvCcSsQqTtAaZz0-9\\s,.-]+$"
+                        },
+                        "style": {
+                            "$ref": "#/definitions/ShapeStyle"
+                        }
+                    }
+                }
+            ]
+        },
+        "GroupObject": {
+            "allOf": [
+                { "$ref": "#/definitions/BaseCanvasObject" },
+                {
+                    "type": "object",
+                    "required": ["type", "childIds"],
+                    "properties": {
+                        "type": {
+                            "const": "group"
+                        },
+                        "childIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "ShapeStyle": {
+            "type": "object",
+            "properties": {
+                "fill": {
+                    "type": "string",
+                    "pattern": "^(#[0-9a-fA-F]{3,8}|rgb\\(.*\\)|rgba\\(.*\\)|hsl\\(.*\\)|hsla\\(.*\\)|[a-zA-Z]+)$"
+                },
+                "stroke": {
+                    "type": "string",
+                    "pattern": "^(#[0-9a-fA-F]{3,8}|rgb\\(.*\\)|rgba\\(.*\\)|hsl\\(.*\\)|hsla\\(.*\\)|[a-zA-Z]+)$"
+                },
+                "strokeWidth": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "strokeDasharray": {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                        "minimum": 0
+                    }
+                },
+                "shadowOffsetX": {
+                    "type": "number"
+                },
+                "shadowOffsetY": {
+                    "type": "number"
+                },
+                "shadowBlur": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "shadowColor": {
+                    "type": "string",
+                    "pattern": "^(#[0-9a-fA-F]{3,8}|rgb\\(.*\\)|rgba\\(.*\\)|hsl\\(.*\\)|hsla\\(.*\\)|[a-zA-Z]+)$"
+                }
+            },
+            "additionalProperties": false
+        },
+        "TextStyle": {
+            "allOf": [
+                { "$ref": "#/definitions/ShapeStyle" },
+                {
+                    "type": "object",
+                    "properties": {
+                        "letterSpacing": {
+                            "type": "number"
+                        },
+                        "lineHeight": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 10
+                        },
+                        "textDecoration": {
+                            "enum": ["none", "underline", "overline", "line-through"]
+                        }
+                    }
+                }
+            ]
+        },
+        "Layer": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "visible",
+                "locked",
+                "objects",
+                "children",
+                "expanded",
+                "opacity",
+                "blendMode",
+                "type",
+                "order",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "visible": {
+                    "type": "boolean"
+                },
+                "locked": {
+                    "type": "boolean"
+                },
+                "objects": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "expanded": {
+                    "type": "boolean"
+                },
+                "opacity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "blendMode": {
+                    "enum": ["normal", "multiply", "screen", "overlay", "soft-light", "hard-light"]
+                },
+                "type": {
+                    "enum": ["default", "group", "adjustment"]
+                },
+                "order": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "updatedAt": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            },
+            "additionalProperties": false
+        },
+        "Selection": {
+            "type": "object",
+            "required": ["objectIds"],
+            "properties": {
+                "objectIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "boundingBox": {
+                    "$ref": "#/definitions/BoundingBox"
+                }
+            },
+            "additionalProperties": false
+        },
+        "LayerSelection": {
+            "type": "object",
+            "required": ["selectedLayerIds"],
+            "properties": {
+                "selectedLayerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "activeLayerId": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "BoundingBox": {
+            "type": "object",
+            "required": ["x", "y", "width", "height"],
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "width": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "height": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            },
+            "additionalProperties": false
+        },
+        "ViewportState": {
+            "type": "object",
+            "required": ["zoom", "panX", "panY", "canvasWidth", "canvasHeight"],
+            "properties": {
+                "zoom": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 100
+                },
+                "panX": {
+                    "type": "number"
+                },
+                "panY": {
+                    "type": "number"
+                },
+                "canvasWidth": {
+                    "type": "number",
+                    "minimum": 1
+                },
+                "canvasHeight": {
+                    "type": "number",
+                    "minimum": 1
+                }
+            },
+            "additionalProperties": false
+        },
+        "ToolType": {
+            "enum": ["select", "rectangle", "circle", "text", "path", "pan", "zoom"]
+        },
+        "HistoryEntry": {
+            "type": "object",
+            "required": ["id", "timestamp", "description", "action", "previousState"],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "action": {
+                    "type": "object",
+                    "required": ["type"],
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "payload": true
+                    },
+                    "additionalProperties": true
+                },
+                "previousState": {
+                    "$ref": "#/definitions/SerializableEditorState"
+                },
+                "affectedObjectIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "affectedLayerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

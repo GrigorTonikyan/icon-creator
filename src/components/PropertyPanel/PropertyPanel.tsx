@@ -33,6 +33,33 @@ const COMMON_PROPERTIES = {
             type: "number" as const,
             unit: "px",
         },
+        rotation: {
+            key: "transform.rotation",
+            label: "Rotation",
+            type: "number" as const,
+            min: 0,
+            max: 360,
+            step: 1,
+            unit: "°",
+        },
+        originX: {
+            key: "transform.originX",
+            label: "Origin X",
+            type: "slider" as const,
+            min: 0,
+            max: 1,
+            step: 0.01,
+            defaultValue: 0.5,
+        },
+        originY: {
+            key: "transform.originY",
+            label: "Origin Y",
+            type: "slider" as const,
+            min: 0,
+            max: 1,
+            step: 0.01,
+            defaultValue: 0.5,
+        },
     },
     dimensions: {
         width: {
@@ -96,11 +123,80 @@ const COMMON_PROPERTIES = {
             unit: "px",
         },
     },
+    text: {
+        content: {
+            key: "content",
+            label: "Content",
+            type: "text" as const,
+        },
+        fontFamily: {
+            key: "style.fontFamily",
+            label: "Font Family",
+            type: "select" as const,
+            options: [
+                { value: "Arial", label: "Arial" },
+                { value: "Helvetica", label: "Helvetica" },
+                { value: "Times New Roman", label: "Times New Roman" },
+                { value: "Georgia", label: "Georgia" },
+                { value: "Verdana", label: "Verdana" },
+                { value: "Courier New", label: "Courier New" },
+            ],
+        },
+        fontSize: {
+            key: "style.fontSize",
+            label: "Font Size",
+            type: "number" as const,
+            min: 6,
+            max: 200,
+            unit: "px",
+        },
+        fontWeight: {
+            key: "style.fontWeight",
+            label: "Font Weight",
+            type: "select" as const,
+            options: [
+                { value: "normal", label: "Normal" },
+                { value: "bold", label: "Bold" },
+                { value: "100", label: "100" },
+                { value: "200", label: "200" },
+                { value: "300", label: "300" },
+                { value: "400", label: "400" },
+                { value: "500", label: "500" },
+                { value: "600", label: "600" },
+                { value: "700", label: "700" },
+                { value: "800", label: "800" },
+                { value: "900", label: "900" },
+            ],
+        },
+        color: {
+            key: "style.color",
+            label: "Text Color",
+            type: "color" as const,
+        },
+        textAlign: {
+            key: "style.textAlign",
+            label: "Text Align",
+            type: "select" as const,
+            options: [
+                { value: "left", label: "Left" },
+                { value: "center", label: "Center" },
+                { value: "right", label: "Right" },
+            ],
+        },
+        lineHeight: {
+            key: "style.lineHeight",
+            label: "Line Height",
+            type: "number" as const,
+            min: 0.5,
+            max: 3,
+            step: 0.1,
+        },
+    },
 };
 
 // Helper function to get schema for object type
 function getSchemaForObjectType(objectType: string): PropertySchema {
-    const { position, dimensions, appearance, style } = COMMON_PROPERTIES;
+    const { position, dimensions, appearance, style, text } = COMMON_PROPERTIES;
 
     switch (objectType) {
         case "rectangle":
@@ -110,7 +206,15 @@ function getSchemaForObjectType(objectType: string): PropertySchema {
                     {
                         id: "transform",
                         title: "Transform",
-                        properties: [position.x, position.y, dimensions.width, dimensions.height],
+                        properties: [
+                            position.x,
+                            position.y,
+                            position.rotation,
+                            dimensions.width,
+                            dimensions.height,
+                            position.originX,
+                            position.originY,
+                        ],
                     },
                     {
                         id: "appearance",
@@ -132,7 +236,66 @@ function getSchemaForObjectType(objectType: string): PropertySchema {
                     {
                         id: "transform",
                         title: "Transform",
-                        properties: [position.x, position.y, dimensions.radius],
+                        properties: [
+                            position.x,
+                            position.y,
+                            position.rotation,
+                            dimensions.radius,
+                            position.originX,
+                            position.originY,
+                        ],
+                    },
+                    {
+                        id: "appearance",
+                        title: "Appearance",
+                        properties: [appearance.opacity, appearance.visible, appearance.locked],
+                    },
+                    {
+                        id: "style",
+                        title: "Style",
+                        properties: [style.fill, style.stroke, style.strokeWidth],
+                    },
+                ],
+            };
+
+        case "text":
+            const { text } = COMMON_PROPERTIES;
+            return {
+                objectType: "text",
+                sections: [
+                    {
+                        id: "transform",
+                        title: "Transform",
+                        properties: [position.x, position.y, position.rotation, position.originX, position.originY],
+                    },
+                    {
+                        id: "appearance",
+                        title: "Appearance",
+                        properties: [appearance.opacity, appearance.visible, appearance.locked],
+                    },
+                    {
+                        id: "text-style",
+                        title: "Text Style",
+                        properties: [
+                            text.fontFamily,
+                            text.fontSize,
+                            text.fontWeight,
+                            text.color,
+                            text.textAlign,
+                            text.lineHeight,
+                        ],
+                    },
+                ],
+            };
+
+        case "path":
+            return {
+                objectType: "path",
+                sections: [
+                    {
+                        id: "transform",
+                        title: "Transform",
+                        properties: [position.x, position.y, position.rotation, position.originX, position.originY],
                     },
                     {
                         id: "appearance",

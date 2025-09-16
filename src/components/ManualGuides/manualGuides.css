@@ -1,0 +1,27 @@
+.ManualGuides {
+    /* Container for manual guides */
+    position: relative;
+}
+
+.manual-guide {
+    /* Common styling for all manual guides */
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    cursor: pointer;
+}
+
+.manual-guide:hover {
+    stroke-width: 2;
+    opacity: 1 !important;
+}
+
+.horizontal-guide {
+    /* Specific styling for horizontal guides */
+    cursor: ns-resize;
+}
+
+.vertical-guide {
+    /* Specific styling for vertical guides */
+    cursor: ew-resize;
+}

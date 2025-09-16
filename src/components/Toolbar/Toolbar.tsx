@@ -39,6 +39,20 @@ const tools: ToolDefinition[] = [
         ariaLabel: "Circle tool (C)",
     },
     {
+        type: "text",
+        name: "Text",
+        icon: "T",
+        shortcut: "T",
+        ariaLabel: "Text tool (T)",
+    },
+    {
+        type: "pen",
+        name: "Pen",
+        icon: "✏",
+        shortcut: "P",
+        ariaLabel: "Pen tool (P)",
+    },
+    {
         type: "hand",
         name: "Hand",
         icon: "✋",

@@ -597,4 +597,482 @@ describe("Shape Tool Operations", () => {
             }
         });
     });
+
+    describe("Rotation Operations", () => {
+        test("should show rotation handle for selected objects", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 100, y: 100 } },
+                "[MouseLeft>]",
+                { coords: { x: 200, y: 150 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                // Should show rotation handle
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]');
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Rotation handle should be positioned above the object
+                const handleElement = rotationHandle as SVGCircleElement;
+                const handleCy = parseFloat(handleElement.getAttribute("cy") || "0");
+                const rectY = parseFloat(rectangle.getAttribute("y") || "0");
+                expect(handleCy).toBeLessThan(rectY);
+            }
+        });
+
+        test("should rotate object when dragging rotation handle", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 250, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Get initial rotation (should be 0)
+                const initialTransform = rectangle.getAttribute("transform") || "";
+
+                // Drag rotation handle to rotate object
+                if (rotationHandle) {
+                    await user.pointer([
+                        { target: rotationHandle },
+                        "[MouseLeft>]",
+                        { coords: { x: 300, y: 100 } }, // Drag to rotate
+                        "[/MouseLeft]",
+                    ]);
+                }
+
+                // Check that rotation was applied
+                const newTransform = rectangle.getAttribute("transform") || "";
+                expect(newTransform).not.toBe(initialTransform);
+                expect(newTransform).toContain("rotate");
+            }
+        });
+
+        test("should snap rotation to 15-degree increments when Shift is held", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 250, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Start rotation with Shift key held
+                await user.keyboard("{Shift>}");
+                if (rotationHandle) {
+                    await user.pointer([
+                        { target: rotationHandle },
+                        "[MouseLeft>]",
+                        { coords: { x: 300, y: 100 } }, // Drag to rotate
+                        "[/MouseLeft]",
+                    ]);
+                }
+                await user.keyboard("{/Shift}");
+
+                // The rotation should be snapped to a 15-degree increment
+                const transform = rectangle.getAttribute("transform") || "";
+                if (transform.includes("rotate")) {
+                    const rotateMatch = transform.match(/rotate\(([^)]+)\)/);
+                    if (rotateMatch && rotateMatch[1]) {
+                        const rotationParams = rotateMatch[1].split(" ");
+                        if (rotationParams[0]) {
+                            const rotationValue = parseFloat(rotationParams[0]);
+                            // Should be a multiple of 15
+                            expect(rotationValue % 15).toBe(0);
+                        }
+                    }
+                }
+            }
+        });
+
+        test("should show visual feedback during rotation", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 250, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Start dragging rotation handle
+                if (rotationHandle) {
+                    await user.pointer([{ target: rotationHandle }, "[MouseLeft>]"]);
+
+                    // Move mouse to trigger rotation feedback
+                    await user.pointer([{ coords: { x: 300, y: 100 } }]);
+
+                    // Should show rotation indicator (this might appear in DOM temporarily)
+                    // Note: The rotation indicator is created dynamically and removed after a delay
+                    // We can test that the rotation handle has active styling
+                    expect(rotationHandle).toHaveClass("selection-handle--active");
+
+                    // End rotation
+                    await user.pointer(["[/MouseLeft]"]);
+                }
+            }
+        });
+
+        test("should maintain transform origin during rotation", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 100, y: 100 } },
+                "[MouseLeft>]",
+                { coords: { x: 200, y: 150 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                // Should show transform origin controls
+                const originHandle = document.querySelector(".origin-handle");
+                expect(originHandle).toBeInTheDocument();
+
+                // The rotation should work with the custom origin point
+                // (This is more of an integration test - actual origin behavior
+                // is tested through property panel integration)
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Rotate the object
+                if (rotationHandle) {
+                    await user.pointer([
+                        { target: rotationHandle },
+                        "[MouseLeft>]",
+                        { coords: { x: 300, y: 100 } },
+                        "[/MouseLeft]",
+                    ]);
+                }
+
+                // Transform should be applied
+                const transform = rectangle.getAttribute("transform") || "";
+                expect(transform).toContain("rotate");
+            }
+        });
+
+        test("should handle rotation for different object types", async () => {
+            render(<CanvasWithProvider />);
+
+            // Test with circle
+            await user.keyboard("o");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 200, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const circle = document.querySelector("circle[data-object-id]") as SVGElement;
+
+            if (circle) {
+                await user.click(circle);
+
+                // Should show rotation handle for circle too
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+                expect(rotationHandle).toBeInTheDocument();
+
+                // Rotate the circle
+                if (rotationHandle) {
+                    await user.pointer([
+                        { target: rotationHandle },
+                        "[MouseLeft>]",
+                        { coords: { x: 300, y: 100 } },
+                        "[/MouseLeft]",
+                    ]);
+                }
+
+                // Transform should be applied to circle
+                const transform = circle.getAttribute("transform") || "";
+                expect(transform).toContain("rotate");
+            }
+        });
+
+        test("should update rotation property in real-time", async () => {
+            render(<CanvasWithProvider />);
+
+            // This test verifies that rotation updates trigger property updates
+            // (Integration with PropertyPanel is tested separately)
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 100, y: 100 } },
+                "[MouseLeft>]",
+                { coords: { x: 200, y: 150 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const rotationHandle = document.querySelector('.rotation-handle[data-position="rotate"]') as SVGElement;
+
+                // Perform rotation
+                if (rotationHandle) {
+                    await user.pointer([
+                        { target: rotationHandle },
+                        "[MouseLeft>]",
+                        { coords: { x: 300, y: 100 } },
+                        "[/MouseLeft]",
+                    ]);
+                }
+
+                // Verify the object has been updated with rotation
+                const objectId = rectangle.getAttribute("data-object-id");
+                expect(objectId).toBeTruthy();
+
+                // The transform should contain rotation
+                const transform = rectangle.getAttribute("transform") || "";
+                expect(transform).toContain("rotate");
+            }
+        });
+    });
+
+    describe("Proportional and Center Scaling", () => {
+        test("should maintain aspect ratio when Shift is held during resize", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 100, y: 100 } },
+                "[MouseLeft>]",
+                { coords: { x: 200, y: 150 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const initialWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const initialHeight = parseFloat(rectangle.getAttribute("height") || "0");
+                const initialAspectRatio = initialWidth / initialHeight;
+
+                // Drag SE handle with Shift held to maintain aspect ratio
+                const seHandle = document.querySelector('.selection-handle[data-position="se"]') as SVGElement;
+
+                await user.keyboard("{Shift>}");
+                await user.pointer([
+                    { target: seHandle },
+                    "[MouseLeft>]",
+                    { coords: { x: 250, y: 200 } },
+                    "[/MouseLeft]",
+                ]);
+                await user.keyboard("{/Shift}");
+
+                const newWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const newHeight = parseFloat(rectangle.getAttribute("height") || "0");
+                const newAspectRatio = newWidth / newHeight;
+
+                // Aspect ratio should be maintained (within tolerance)
+                expect(Math.abs(newAspectRatio - initialAspectRatio)).toBeLessThan(0.1);
+            }
+        });
+
+        test("should scale from center when Alt is held during resize", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 250, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const initialX = parseFloat(rectangle.getAttribute("x") || "0");
+                const initialY = parseFloat(rectangle.getAttribute("y") || "0");
+                const initialWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const initialHeight = parseFloat(rectangle.getAttribute("height") || "0");
+
+                const initialCenterX = initialX + initialWidth / 2;
+                const initialCenterY = initialY + initialHeight / 2;
+
+                // Drag SE handle with Alt held to scale from center
+                const seHandle = document.querySelector('.selection-handle[data-position="se"]') as SVGElement;
+
+                await user.keyboard("{Alt>}");
+                await user.pointer([
+                    { target: seHandle },
+                    "[MouseLeft>]",
+                    { coords: { x: 280, y: 230 } },
+                    "[/MouseLeft]",
+                ]);
+                await user.keyboard("{/Alt}");
+
+                const newX = parseFloat(rectangle.getAttribute("x") || "0");
+                const newY = parseFloat(rectangle.getAttribute("y") || "0");
+                const newWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const newHeight = parseFloat(rectangle.getAttribute("height") || "0");
+
+                const newCenterX = newX + newWidth / 2;
+                const newCenterY = newY + newHeight / 2;
+
+                // Center should remain approximately the same
+                expect(Math.abs(newCenterX - initialCenterX)).toBeLessThan(5);
+                expect(Math.abs(newCenterY - initialCenterY)).toBeLessThan(5);
+
+                // Size should have changed
+                expect(newWidth).not.toBe(initialWidth);
+                expect(newHeight).not.toBe(initialHeight);
+            }
+        });
+
+        test("should combine proportional and center scaling with Shift+Alt", async () => {
+            render(<CanvasWithProvider />);
+
+            // Create and select rectangle
+            await user.keyboard("r");
+            const svg = document.querySelector(".canvas-svg") as SVGElement;
+
+            await user.pointer([
+                { target: svg },
+                { coords: { x: 150, y: 150 } },
+                "[MouseLeft>]",
+                { coords: { x: 250, y: 200 } },
+                "[/MouseLeft]",
+            ]);
+
+            await user.keyboard("v");
+            const rectangle = document.querySelector("rect[data-object-id]") as SVGElement;
+
+            if (rectangle) {
+                await user.click(rectangle);
+
+                const initialX = parseFloat(rectangle.getAttribute("x") || "0");
+                const initialY = parseFloat(rectangle.getAttribute("y") || "0");
+                const initialWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const initialHeight = parseFloat(rectangle.getAttribute("height") || "0");
+
+                const initialCenterX = initialX + initialWidth / 2;
+                const initialCenterY = initialY + initialHeight / 2;
+                const initialAspectRatio = initialWidth / initialHeight;
+
+                // Drag SE handle with both Shift and Alt held
+                const seHandle = document.querySelector('.selection-handle[data-position="se"]') as SVGElement;
+
+                await user.keyboard("{Shift>}{Alt>}");
+                await user.pointer([
+                    { target: seHandle },
+                    "[MouseLeft>]",
+                    { coords: { x: 280, y: 230 } },
+                    "[/MouseLeft]",
+                ]);
+                await user.keyboard("{/Alt}{/Shift}");
+
+                const newX = parseFloat(rectangle.getAttribute("x") || "0");
+                const newY = parseFloat(rectangle.getAttribute("y") || "0");
+                const newWidth = parseFloat(rectangle.getAttribute("width") || "0");
+                const newHeight = parseFloat(rectangle.getAttribute("height") || "0");
+
+                const newCenterX = newX + newWidth / 2;
+                const newCenterY = newY + newHeight / 2;
+                const newAspectRatio = newWidth / newHeight;
+
+                // Center should remain approximately the same
+                expect(Math.abs(newCenterX - initialCenterX)).toBeLessThan(5);
+                expect(Math.abs(newCenterY - initialCenterY)).toBeLessThan(5);
+
+                // Aspect ratio should be maintained
+                expect(Math.abs(newAspectRatio - initialAspectRatio)).toBeLessThan(0.1);
+
+                // Size should have changed
+                expect(newWidth).not.toBe(initialWidth);
+                expect(newHeight).not.toBe(initialHeight);
+            }
+        });
+    });
 });

@@ -1,0 +1,210 @@
+/* Crash Recovery Dialog Styles */
+
+.CrashRecoveryDialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.CrashRecoveryDialog {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideInScale 0.2s ease-out;
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.recovery-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.recovery-header h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.recovery-header p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.recovery-content {
+    padding: 1.5rem;
+}
+
+.project-info {
+    background: var(--color-surface-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.info-value {
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: right;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recovery-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.restore-button,
+.dismiss-button {
+    flex: 1;
+    height: 2.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.restore-button {
+    background: var(--color-primary);
+    color: white;
+    border: 1px solid var(--color-primary);
+}
+
+.restore-button:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+
+.restore-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dismiss-button {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.dismiss-button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+}
+
+.recovery-note {
+    background: var(--color-surface-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.recovery-note p {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
+
+.recovery-note p:last-child {
+    margin-bottom: 0;
+}
+
+.recovery-note strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .CrashRecoveryDialog-overlay {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .CrashRecoveryDialog {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    .CrashRecoveryDialog-overlay {
+        padding: 0.5rem;
+    }
+
+    .CrashRecoveryDialog {
+        max-width: none;
+    }
+
+    .recovery-header {
+        padding: 1rem 1rem 0.75rem;
+    }
+
+    .recovery-content {
+        padding: 1rem;
+    }
+
+    .recovery-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .restore-button,
+    .dismiss-button {
+        width: 100%;
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .info-value {
+        text-align: left;
+        max-width: 100%;
+    }
+}

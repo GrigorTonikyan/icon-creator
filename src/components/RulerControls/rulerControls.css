@@ -1,0 +1,269 @@
+/* RulerControls component styling */
+
+.ruler-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ruler-controls__title {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.ruler-controls__section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Toggle switch styling */
+.ruler-controls__toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.ruler-controls__checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ruler-controls__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #495057;
+    flex: 1;
+}
+
+.ruler-controls__toggle-switch {
+    width: 40px;
+    height: 20px;
+    background: #dee2e6;
+    border-radius: 10px;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.ruler-controls__toggle-thumb {
+    width: 16px;
+    height: 16px;
+    background: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ruler-controls__checkbox:checked + .ruler-controls__label + .ruler-controls__toggle-switch {
+    background: #007bff;
+}
+
+.ruler-controls__checkbox:checked
+    + .ruler-controls__label
+    + .ruler-controls__toggle-switch
+    .ruler-controls__toggle-thumb {
+    transform: translateX(20px);
+}
+
+.ruler-controls__checkbox:disabled + .ruler-controls__label {
+    color: #adb5bd;
+}
+
+.ruler-controls__checkbox:disabled + .ruler-controls__label + .ruler-controls__toggle-switch {
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Field styling */
+.ruler-controls__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ruler-controls__field-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ruler-controls__select {
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #ffffff;
+    font-size: 13px;
+    color: #495057;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ruler-controls__select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.ruler-controls__select:disabled {
+    background: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* Status section */
+.ruler-controls__status {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.ruler-controls__status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ruler-controls__status-icon {
+    font-size: 8px;
+    line-height: 1;
+}
+
+.ruler-controls__status-icon--active {
+    color: #28a745;
+}
+
+.ruler-controls__status-icon--inactive {
+    color: #6c757d;
+}
+
+.ruler-controls__status-text {
+    font-size: 12px;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Hint section */
+.ruler-controls__hint {
+    padding: 8px 12px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+}
+
+.ruler-controls__hint-text {
+    margin: 0;
+    font-size: 11px;
+    color: #856404;
+    line-height: 1.4;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .ruler-controls {
+    background: #2c3034;
+    border-color: #495057;
+}
+
+[data-theme="dark"] .ruler-controls__title {
+    color: #f8f9fa;
+    border-bottom-color: #495057;
+}
+
+[data-theme="dark"] .ruler-controls__label {
+    color: #adb5bd;
+}
+
+[data-theme="dark"] .ruler-controls__field-label {
+    color: #6c757d;
+}
+
+[data-theme="dark"] .ruler-controls__select {
+    background: #495057;
+    border-color: #6c757d;
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .ruler-controls__select:focus {
+    border-color: #66b3ff;
+    box-shadow: 0 0 0 2px rgba(102, 179, 255, 0.1);
+}
+
+[data-theme="dark"] .ruler-controls__select:disabled {
+    background: #343a40;
+    color: #6c757d;
+}
+
+[data-theme="dark"] .ruler-controls__status {
+    background: #343a40;
+    border-left-color: #66b3ff;
+}
+
+[data-theme="dark"] .ruler-controls__status-text {
+    color: #adb5bd;
+}
+
+[data-theme="dark"] .ruler-controls__hint {
+    background: #544622;
+    border-color: #8b7355;
+}
+
+[data-theme="dark"] .ruler-controls__hint-text {
+    color: #ffc107;
+}
+
+/* Hover effects */
+.ruler-controls__toggle:hover .ruler-controls__toggle-switch {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ruler-controls__select:hover:not(:disabled) {
+    border-color: #007bff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .ruler-controls {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .ruler-controls__title {
+        font-size: 13px;
+    }
+
+    .ruler-controls__toggle-switch {
+        width: 36px;
+        height: 18px;
+    }
+
+    .ruler-controls__toggle-thumb {
+        width: 14px;
+        height: 14px;
+    }
+
+    .ruler-controls__checkbox:checked
+        + .ruler-controls__label
+        + .ruler-controls__toggle-switch
+        .ruler-controls__toggle-thumb {
+        transform: translateX(18px);
+    }
+}

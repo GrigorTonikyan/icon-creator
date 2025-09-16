@@ -7,6 +7,17 @@ vi.mock("../Layout", () => ({
     LayoutRegion: ({ children }: { children: React.ReactNode }) => <div data-testid="layout-region">{children}</div>,
 }));
 
+// Mock ExportControls component
+vi.mock("../../components/ExportControls", () => ({
+    ExportControls: ({ onExport }: { onExport: (options: any) => void }) => (
+        <div data-testid="export-controls">
+            <button onClick={() => onExport({ format: "svg" })}>Export Controls SVG</button>
+            <button onClick={() => onExport({ format: "png" })}>Export Controls PNG</button>
+            <button onClick={() => onExport({ format: "json" })}>Export Controls JSON</button>
+        </div>
+    ),
+}));
+
 // Mock for download functionality
 const mockLink = {
     href: "",
@@ -33,7 +44,16 @@ describe("IconCreator", () => {
 
     test("should have export and reset buttons", () => {
         render(<IconCreator />);
-        expect(screen.getByText("Export HTML")).toBeInTheDocument();
+        expect(screen.getByText("Export SVG")).toBeInTheDocument();
+        expect(screen.getByText("Export PNG")).toBeInTheDocument();
         expect(screen.getByText("Reset")).toBeInTheDocument();
+    });
+
+    test("should have export controls component", () => {
+        render(<IconCreator />);
+        expect(screen.getByTestId("export-controls")).toBeInTheDocument();
+        expect(screen.getByText("Export Controls SVG")).toBeInTheDocument();
+        expect(screen.getByText("Export Controls PNG")).toBeInTheDocument();
+        expect(screen.getByText("Export Controls JSON")).toBeInTheDocument();
     });
 });

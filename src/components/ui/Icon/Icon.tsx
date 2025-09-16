@@ -15,7 +15,19 @@ export type IconName =
     | "lock"
     | "unlock"
     | "eye"
-    | "eye-off";
+    | "eye-off"
+    | "undo"
+    | "redo"
+    | "clock"
+    | "circle"
+    | "plus"
+    | "minus"
+    | "trash"
+    | "edit"
+    | "move"
+    | "copy"
+    | "scissors"
+    | "activity";
 
 export interface IconProps {
     name: IconName;
@@ -39,6 +51,18 @@ const iconMap: Record<IconName, string> = {
     unlock: "🔓",
     eye: "👁",
     "eye-off": "👁‍🗨",
+    undo: "↶",
+    redo: "↷",
+    clock: "🕐",
+    circle: "●",
+    plus: "+",
+    minus: "−",
+    trash: "🗑",
+    edit: "✎",
+    move: "↕",
+    copy: "⧉",
+    scissors: "✂",
+    activity: "⚡",
 };
 
 export function Icon({ name, size = "md", className, "aria-label": ariaLabel, ...props }: IconProps) {

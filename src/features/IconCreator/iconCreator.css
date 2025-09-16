@@ -67,6 +67,14 @@
         top: 2rem;
         height: fit-content;
     }
+
+    .export-section {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+    }
 }
 /* Responsive Design */
 @media (max-width: 1024px) {

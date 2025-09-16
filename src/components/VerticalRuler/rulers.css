@@ -1,0 +1,119 @@
+/* Ruler components styling */
+
+.horizontal-ruler,
+.vertical-ruler {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+}
+
+.horizontal-ruler {
+    top: 0;
+    left: 0;
+}
+
+.vertical-ruler {
+    top: 0;
+    left: 0;
+}
+
+.ruler-svg {
+    overflow: visible;
+}
+
+.ruler-background {
+    fill: #f8f9fa;
+    stroke: none;
+}
+
+.ruler-ticks {
+    pointer-events: none;
+}
+
+.ruler-tick-line {
+    stroke: #6c757d;
+    stroke-width: 0.5px;
+}
+
+.ruler-tick--major .ruler-tick-line {
+    stroke: #495057;
+    stroke-width: 1px;
+}
+
+.ruler-tick--minor .ruler-tick-line {
+    stroke: #adb5bd;
+    stroke-width: 0.5px;
+}
+
+.ruler-label {
+    fill: #495057;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    pointer-events: none;
+    user-select: none;
+}
+
+.ruler-label--vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.ruler-border {
+    stroke: #dee2e6;
+    stroke-width: 1px;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .ruler-background {
+    fill: #343a40;
+}
+
+[data-theme="dark"] .ruler-tick-line {
+    stroke: #adb5bd;
+}
+
+[data-theme="dark"] .ruler-tick--major .ruler-tick-line {
+    stroke: #f8f9fa;
+}
+
+[data-theme="dark"] .ruler-tick--minor .ruler-tick-line {
+    stroke: #6c757d;
+}
+
+[data-theme="dark"] .ruler-label {
+    fill: #f8f9fa;
+}
+
+[data-theme="dark"] .ruler-border {
+    stroke: #495057;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .ruler-label {
+        font-size: 8px;
+    }
+}
+
+/* Animation for smooth ruler updates during zoom/pan */
+.ruler-ticks {
+    transition: opacity 0.1s ease-out;
+}
+
+/* Hide labels during rapid zoom/pan for performance */
+.ruler-ticks.ruler-ticks--updating .ruler-label {
+    opacity: 0;
+}
+
+/* Hover effects for interactive elements (future use) */
+.ruler-tick:hover .ruler-tick-line {
+    stroke-width: 2px;
+}
+
+/* Focus styles for accessibility */
+.ruler-svg:focus {
+    outline: 2px solid #007bff;
+    outline-offset: -2px;
+}

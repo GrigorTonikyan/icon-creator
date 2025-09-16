@@ -1,0 +1,284 @@
+/* History Panel Styles */
+
+.history-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+}
+
+/* Header */
+
+.history-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background: var(--color-surface-elevated);
+    border-bottom: var(--border-width) solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.history-panel__title {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.history-panel__actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* Content */
+
+.history-panel__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+/* Empty State */
+
+.history-panel__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--color-text-secondary);
+}
+
+.history-panel__empty-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.history-panel__empty-text {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.history-panel__empty-subtext {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+/* History List */
+
+.history-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+/* History Items */
+
+.history-item {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.history-item:hover .history-item__content {
+    background: var(--color-surface-hover);
+}
+
+.history-item--current .history-item__content {
+    background: var(--color-primary-muted);
+    border-left: 3px solid var(--color-primary);
+}
+
+.history-item--undone {
+    opacity: 0.6;
+}
+
+.history-item--undone .history-item__content {
+    background: var(--color-surface-disabled);
+}
+
+.history-item__content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.15s ease;
+    user-select: none;
+    min-height: 40px;
+}
+
+.history-item__icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-secondary);
+    transition: color 0.15s ease;
+}
+
+.history-item--current .history-item__icon {
+    color: var(--color-primary);
+}
+
+.history-item__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0; /* Allow text to truncate */
+}
+
+.history-item__description {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item__timestamp {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: 1;
+}
+
+/* Focus States */
+
+.history-item:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -1px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Scrollbar Styling */
+
+.history-panel__content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-panel__content::-webkit-scrollbar-track {
+    background: var(--color-surface);
+}
+
+.history-panel__content::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.history-panel__content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+/* Dark Theme Adjustments */
+
+[data-theme="dark"] .history-panel {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .history-panel__header {
+    background: var(--color-surface-elevated-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .history-panel__title {
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .history-panel__empty {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .history-panel__empty-text {
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .history-item:hover .history-item__content {
+    background: var(--color-surface-hover-dark);
+}
+
+[data-theme="dark"] .history-item--current .history-item__content {
+    background: var(--color-primary-muted-dark);
+    border-left-color: var(--color-primary-dark);
+}
+
+[data-theme="dark"] .history-item--undone .history-item__content {
+    background: var(--color-surface-disabled-dark);
+}
+
+[data-theme="dark"] .history-item__description {
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .history-item__timestamp {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .history-item__icon {
+    color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .history-item--current .history-item__icon {
+    color: var(--color-primary-dark);
+}
+
+/* High Contrast Mode */
+
+@media (prefers-contrast: high) {
+    .history-panel {
+        border-width: 2px;
+    }
+
+    .history-panel__header {
+        border-bottom-width: 2px;
+    }
+
+    .history-item--current .history-item__content {
+        border-left-width: 4px;
+    }
+}
+
+/* Reduced Motion */
+
+@media (prefers-reduced-motion: reduce) {
+    .history-item,
+    .history-item__content,
+    .history-item__icon {
+        transition: none;
+    }
+}
+
+/* Mobile Responsive */
+
+@media (max-width: 768px) {
+    .history-panel__header {
+        padding: var(--spacing-sm);
+    }
+
+    .history-panel__content {
+        padding: var(--spacing-xs);
+    }
+
+    .history-item__content {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        min-height: 36px;
+    }
+
+    .history-panel__actions {
+        gap: var(--spacing-xxs);
+    }
+}

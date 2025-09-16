@@ -1,0 +1,9 @@
+.SmartGuides {
+    /* Smart guide lines container */
+    pointer-events: none;
+}
+
+/* Ensure smart guide lines appear above other canvas elements but below selection handles */
+.SmartGuides line {
+    z-index: 100;
+}
