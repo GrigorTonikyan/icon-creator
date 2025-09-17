@@ -1,13 +1,49 @@
 .ErrorBoundary {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+    border: 3px solid #dc2626;
+    border-radius: 16px;
     padding: 2rem;
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
-    border: 1px solid #fca5a5;
-    border-radius: 8px;
-    color: #991b1b;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 80vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 9999;
+}
+
+/* Severity-based styling */
+.ErrorBoundary--critical {
+    background: linear-gradient(135deg, #450a0a, #7f1d1d);
+    border-color: #991b1b;
+    animation: errorPulse 2s infinite;
+}
+
+.ErrorBoundary--high {
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+    border-color: #dc2626;
+}
+
+.ErrorBoundary--medium {
+    background: linear-gradient(135deg, #fef3cd, #fde68a);
+    border-color: #d97706;
+}
+
+.ErrorBoundary--low {
+    background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+    border-color: #2563eb;
+}
+
+@keyframes errorPulse {
+    0%,
+    100% {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    50% {
+        box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.3), 0 10px 10px -5px rgba(220, 38, 38, 0.2);
+    }
 }
 
 .ErrorBoundary__content {
@@ -16,10 +52,68 @@
 }
 
 .ErrorBoundary__title {
+    margin: 0 0 1rem 0;
     font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-weight: bold;
     color: #7f1d1d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Severity-specific title styling */
+.ErrorBoundary--critical .ErrorBoundary__title {
+    color: #fef2f2;
+}
+
+.ErrorBoundary--high .ErrorBoundary__title {
+    color: #7f1d1d;
+}
+
+.ErrorBoundary--medium .ErrorBoundary__title {
+    color: #92400e;
+}
+
+.ErrorBoundary--low .ErrorBoundary__title {
+    color: #1e40af;
+}
+
+.ErrorBoundary__icon {
+    font-size: 1.75rem;
+}
+
+.ErrorBoundary__recovery-status {
+    background: var(--color-info-bg);
+    border: 1px solid var(--color-info-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ErrorBoundary__recovery-status--recovering {
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-border);
+}
+
+.ErrorBoundary__spinner {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--color-border-light);
+    border-top: 2px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .ErrorBoundary__message {
@@ -27,6 +121,24 @@
     line-height: 1.5;
     margin-bottom: 1.5rem;
     color: #991b1b;
+}
+
+/* Severity-specific message styling */
+.ErrorBoundary--critical .ErrorBoundary__message {
+    color: #fca5a5;
+    font-weight: 500;
+}
+
+.ErrorBoundary--high .ErrorBoundary__message {
+    color: #991b1b;
+}
+
+.ErrorBoundary--medium .ErrorBoundary__message {
+    color: #b45309;
+}
+
+.ErrorBoundary--low .ErrorBoundary__message {
+    color: #1d4ed8;
 }
 
 .ErrorBoundary__details {
@@ -79,12 +191,61 @@
         color: #fca5a5;
     }
 
+    /* Dark theme severity overrides */
+    .ErrorBoundary--critical {
+        background: linear-gradient(135deg, #7f1d1d, #991b1b);
+        border-color: #dc2626;
+    }
+
+    .ErrorBoundary--high {
+        background: linear-gradient(135deg, #450a0a, #7f1d1d);
+        border-color: #991b1b;
+    }
+
+    .ErrorBoundary--medium {
+        background: linear-gradient(135deg, #451a03, #78350f);
+        border-color: #a16207;
+    }
+
+    .ErrorBoundary--low {
+        background: linear-gradient(135deg, #1e3a8a, #3730a3);
+        border-color: #3b82f6;
+    }
+
     .ErrorBoundary__title {
         color: #fef2f2;
     }
 
+    .ErrorBoundary--medium .ErrorBoundary__title {
+        color: #fed7aa;
+    }
+
+    .ErrorBoundary--low .ErrorBoundary__title {
+        color: #dbeafe;
+    }
+
     .ErrorBoundary__message {
         color: #fca5a5;
+    }
+
+    .ErrorBoundary--medium .ErrorBoundary__message {
+        color: #fed7aa;
+    }
+
+    .ErrorBoundary--low .ErrorBoundary__message {
+        color: #dbeafe;
+    }
+
+    .ErrorBoundary__recovery-status {
+        background: #1e3a8a;
+        border-color: #3b82f6;
+        color: #dbeafe;
+    }
+
+    .ErrorBoundary__recovery-status--recovering {
+        background: #78350f;
+        border-color: #a16207;
+        color: #fed7aa;
     }
 
     .ErrorBoundary__details {

@@ -7,7 +7,7 @@ export interface NavigationItem {
     disabled?: boolean;
 }
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "auto" | "custom";
 
 export interface ThemeContextType {
     theme: Theme;

@@ -1,10 +1,17 @@
 // Barrel export for components directory
+export { AccessibilityProvider } from "./AccessibilityProvider";
+export { AccessibilitySettings } from "./AccessibilitySettings";
 export { AlignmentControls } from "./AlignmentControls";
+export { AnalyticsSettings } from "./AnalyticsSettings";
+export { AnimationPanel } from "./AnimationPanel";
 export { AutoSaveSettingsPanel } from "./AutoSaveSettingsPanel";
 export { Canvas } from "./Canvas";
+export { ComponentLibrary } from "./ComponentLibrary";
+export { ComponentLibraryPanel } from "./ComponentLibraryPanel";
 export { ConfigPanel } from "./ConfigPanel/configPanel";
 export { CrashRecoveryDialog } from "./CrashRecoveryDialog";
 export { ErrorBoundary } from "./ErrorBoundary";
+export { ErrorRecoveryProvider, useErrorRecovery } from "./ErrorRecoveryProvider";
 export { ExportControls } from "./ExportControls";
 export { ExportPreview } from "./ExportPreview";
 export { GridControls } from "./GridControls";
@@ -13,6 +20,7 @@ export { HistoryPanel } from "./HistoryPanel";
 export { HorizontalRuler } from "./HorizontalRuler";
 export { IconPreview } from "./IconPreview/iconPreview";
 export { ImportControls } from "./ImportControls";
+export { KeyboardShortcutSettings } from "./KeyboardShortcutSettings";
 export { LayerPanel } from "./LayerPanel/LayerPanel";
 export { ManualGuides } from "./ManualGuides";
 export { MeasurementIndicator } from "./MeasurementIndicator";
@@ -21,7 +29,11 @@ export { NavBar as Header } from "./NavBar/navBar";
 export { PrecisionInputs } from "./PrecisionInputs";
 export { PropertyPanel } from "./PropertyPanel";
 export { RulerControls } from "./RulerControls";
+export { SmartGuides } from "./SmartGuides";
+export { SnapSettings } from "./SnapSettings";
+export { ThemeSettings } from "./ThemeSettings";
 export { Toolbar } from "./Toolbar";
+export { TourGuide } from "./TourGuide/TourGuide";
 export { VerticalRuler } from "./VerticalRuler";
 
 // UI Components

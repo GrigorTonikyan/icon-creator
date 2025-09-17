@@ -1,6 +1,7 @@
 import cn from "classnames";
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type WheelEvent } from "react";
 import { useEditor } from "../../contexts/EditorContext";
+import { usePerformance } from "../../hooks/usePerformance";
 import {
     type Bounds,
     type CanvasMouseEvent,
@@ -31,6 +32,10 @@ import {
     type SmartGuide,
     type ObjectSnapResult,
 } from "../../utils/smartGuides";
+import { calculateObjectBounds as getObjectBounds } from "../../utils/performance";
+import { useCanvasRenderer } from "../../utils/canvasRenderer";
+import { FillUtils } from "../../utils/gradientUtils";
+import { EffectUtils } from "../../utils/effectUtils";
 import { SmartGuides } from "../SmartGuides";
 import { ManualGuides } from "../ManualGuides";
 import { HorizontalRuler } from "../HorizontalRuler";
@@ -119,6 +124,19 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
         rulers,
         precisionInputs,
     } = state;
+
+    // Performance optimization hook
+    const { visibleObjects, renderLevel, metrics, isPerformanceMode, startFrame, endFrame, batchRender, logMetrics } =
+        usePerformance(objects, viewport, {
+            enableCulling: true,
+            enableSimplification: true,
+            enableBatching: true,
+            enableMonitoring: process.env.NODE_ENV === "development",
+            maxVisibleObjects: 200,
+        });
+
+    // Canvas renderer for gradients and patterns
+    const canvasRenderer = useCanvasRenderer(svgRef);
 
     // Create snap options based on current editor state
     const snapOptions: SnapOptions = {
@@ -586,7 +604,70 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
         return <g className="canvas-grid">{lines}</g>;
     };
 
-    // Object rendering with layer hierarchy support
+    // Render effect filters for objects with effects
+    const renderEffectFilters = () => {
+        const visibleLayerIds = getVisibleLayers(layers, layerOrder);
+        const filters: React.ReactElement[] = [];
+
+        visibleLayerIds.forEach((layerId) => {
+            const layer = layers[layerId];
+            if (!layer) return;
+
+            layer.objects.forEach((objectId) => {
+                const objectOrSimplified = visibleObjects[objectId];
+                if (!objectOrSimplified) return;
+
+                const object =
+                    "originalObject" in objectOrSimplified ? objectOrSimplified.originalObject : objectOrSimplified;
+
+                if (!object.visible) return;
+
+                // Check if object has effects
+                const hasEffects =
+                    object.type !== "text" &&
+                    "style" in object &&
+                    object.style?.effects?.some((effect) => effect.enabled);
+                if (!hasEffects) return;
+
+                const enabledEffects = object.style.effects?.filter((effect) => effect.enabled) || [];
+                if (enabledEffects.length === 0) return;
+
+                const filterId = `effects-${objectId}`;
+
+                // Create a simple drop shadow filter for now (can be expanded later)
+                const hasDropShadow = enabledEffects.some((effect) => effect.effect.type === "drop-shadow");
+                const hasBlur = enabledEffects.some((effect) => effect.effect.type === "blur");
+
+                if (hasDropShadow || hasBlur) {
+                    const dropShadowEffect = enabledEffects.find((effect) => effect.effect.type === "drop-shadow");
+                    const blurEffect = enabledEffects.find((effect) => effect.effect.type === "blur");
+
+                    filters.push(
+                        <filter key={filterId} id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+                            {hasDropShadow && dropShadowEffect && (
+                                <>
+                                    <feDropShadow
+                                        dx={(dropShadowEffect.effect as any).offsetX || 0}
+                                        dy={(dropShadowEffect.effect as any).offsetY || 0}
+                                        stdDeviation={(dropShadowEffect.effect as any).blur / 2 || 2}
+                                        floodColor={(dropShadowEffect.effect as any).color || "#000000"}
+                                        floodOpacity={(dropShadowEffect.effect as any).opacity ?? 0.5}
+                                    />
+                                </>
+                            )}
+                            {hasBlur && blurEffect && (
+                                <feGaussianBlur stdDeviation={(blurEffect.effect as any).radius || 2} />
+                            )}
+                        </filter>
+                    );
+                }
+            });
+        });
+
+        return filters;
+    };
+
+    // Object rendering with layer hierarchy support and performance optimization
     const renderObjects = () => {
         const visibleLayerIds = getVisibleLayers(layers, layerOrder);
 
@@ -597,8 +678,57 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
             return (
                 <g key={layerId} className="canvas-layer" data-layer-id={layerId}>
                     {layer.objects.map((objectId) => {
-                        const object = objects[objectId];
-                        if (!object || !object.visible) return null;
+                        // Use performance-optimized visible objects instead of all objects
+                        const objectOrSimplified = visibleObjects[objectId];
+                        if (!objectOrSimplified) return null;
+
+                        // Handle both regular objects and simplified objects
+                        const object =
+                            "originalObject" in objectOrSimplified
+                                ? objectOrSimplified.originalObject
+                                : objectOrSimplified;
+
+                        if (!object.visible) return null;
+
+                        // Process fills through canvas renderer if available
+                        if (canvasRenderer) {
+                            canvasRenderer.processFills(object);
+                        }
+
+                        // Check if this is a simplified or placeholder rendering
+                        const isSimplified = "simplificationLevel" in objectOrSimplified;
+                        const isPlaceholder = isSimplified && objectOrSimplified.renderAsPlaceholder;
+                        const simplificationLevel = isSimplified ? objectOrSimplified.simplificationLevel : 0;
+
+                        // Skip details for simplified rendering at low zoom levels
+                        const skipDetails = renderLevel.skipDetails || isSimplified;
+                        const simplified = renderLevel.simplified || isSimplified;
+
+                        // Get effects filter ID for this object (if any effects are enabled)
+                        const hasEffects =
+                            object.type !== "text" &&
+                            "style" in object &&
+                            object.style?.effects?.some((effect) => effect.enabled);
+                        const filterId = hasEffects ? `effects-${objectId}` : undefined;
+
+                        // Render placeholder for very low zoom levels
+                        if (isPlaceholder) {
+                            const bounds = getObjectBounds(object);
+                            return (
+                                <rect
+                                    key={objectId}
+                                    data-object-id={objectId}
+                                    x={bounds.x}
+                                    y={bounds.y}
+                                    width={bounds.width}
+                                    height={bounds.height}
+                                    fill="#cccccc"
+                                    stroke="none"
+                                    opacity={0.5}
+                                    className="canvas-object canvas-object--placeholder"
+                                />
+                            );
+                        }
 
                         switch (object.type) {
                             case "rectangle": {
@@ -619,17 +749,23 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                         y={rect.transform.y}
                                         width={rect.width}
                                         height={rect.height}
-                                        rx={rect.borderRadius || 0}
-                                        ry={rect.borderRadius || 0}
-                                        fill={rect.style?.fill || "#007ACC"}
-                                        stroke={rect.style?.stroke || "#ffffff"}
-                                        strokeWidth={rect.style?.strokeWidth || 1}
-                                        strokeDasharray={rect.style?.strokeDasharray?.join(" ") || "none"}
+                                        rx={simplified ? 0 : rect.borderRadius || 0}
+                                        ry={simplified ? 0 : rect.borderRadius || 0}
+                                        fill={FillUtils.toSVGValue(rect.style?.fill || "#007ACC")}
+                                        stroke={
+                                            simplified ? "none" : FillUtils.toSVGValue(rect.style?.stroke || "#ffffff")
+                                        }
+                                        strokeWidth={simplified ? 0 : rect.style?.strokeWidth || 1}
+                                        strokeDasharray={
+                                            simplified ? "none" : rect.style?.strokeDasharray?.join(" ") || "none"
+                                        }
                                         opacity={rect.opacity}
                                         transform={transform}
+                                        filter={filterId ? `url(#${filterId})` : undefined}
                                         className={cn("canvas-object", {
                                             "canvas-object--selected": selection.objectIds.includes(objectId),
                                             "canvas-object--creating": interaction.currentShapeId === objectId,
+                                            "canvas-object--simplified": simplified,
                                         })}
                                         style={{
                                             cursor: selectedTool === "select" ? "move" : "default",
@@ -658,15 +794,23 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                         cx={circle.transform.x}
                                         cy={circle.transform.y}
                                         r={circle.radius}
-                                        fill={circle.style?.fill || "#007ACC"}
-                                        stroke={circle.style?.stroke || "#ffffff"}
-                                        strokeWidth={circle.style?.strokeWidth || 1}
-                                        strokeDasharray={circle.style?.strokeDasharray?.join(" ") || "none"}
+                                        fill={FillUtils.toSVGValue(circle.style?.fill || "#007ACC")}
+                                        stroke={
+                                            simplified
+                                                ? "none"
+                                                : FillUtils.toSVGValue(circle.style?.stroke || "#ffffff")
+                                        }
+                                        strokeWidth={simplified ? 0 : circle.style?.strokeWidth || 1}
+                                        strokeDasharray={
+                                            simplified ? "none" : circle.style?.strokeDasharray?.join(" ") || "none"
+                                        }
                                         opacity={circle.opacity}
                                         transform={transform}
+                                        filter={filterId ? `url(#${filterId})` : undefined}
                                         className={cn("canvas-object", {
                                             "canvas-object--selected": selection.objectIds.includes(objectId),
                                             "canvas-object--creating": interaction.currentShapeId === objectId,
+                                            "canvas-object--simplified": simplified,
                                         })}
                                         style={{
                                             cursor: selectedTool === "select" ? "move" : "default",
@@ -679,6 +823,13 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                 const rotation = text.transform.rotation || 0;
                                 const transform = `rotate(${rotation} ${text.transform.x} ${text.transform.y})`;
 
+                                // Apply progressive text simplification
+                                let textContent = text.content;
+                                if (isSimplified && simplificationLevel > 0.5 && text.content.length > 20) {
+                                    const maxLength = Math.max(10, Math.floor(20 * (1 - simplificationLevel)));
+                                    textContent = text.content.substring(0, maxLength) + "...";
+                                }
+
                                 return (
                                     <text
                                         key={objectId}
@@ -687,8 +838,8 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                         y={text.transform.y}
                                         fill={text.style?.color || "#000000"}
                                         fontSize={text.style?.fontSize || 16}
-                                        fontFamily={text.style?.fontFamily || "Arial"}
-                                        fontWeight={text.style?.fontWeight || "normal"}
+                                        fontFamily={simplified ? "Arial" : text.style?.fontFamily || "Arial"}
+                                        fontWeight={simplified ? "normal" : text.style?.fontWeight || "normal"}
                                         textAnchor={
                                             text.style?.textAlign === "center"
                                                 ? "middle"
@@ -702,6 +853,7 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                         className={cn("canvas-object canvas-object--text", {
                                             "canvas-object--selected": selection.objectIds.includes(objectId),
                                             "canvas-object--creating": interaction.currentShapeId === objectId,
+                                            "canvas-object--simplified": simplified,
                                         })}
                                         style={{
                                             cursor:
@@ -711,7 +863,7 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                                     ? "text"
                                                     : "default",
                                         }}>
-                                        {text.content}
+                                        {textContent}
                                     </text>
                                 );
                             }
@@ -720,22 +872,48 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                                 const rotation = path.transform.rotation || 0;
                                 const transform = `rotate(${rotation} 0 0)`;
 
+                                // Apply progressive path simplification based on simplification level
+                                let pathData = path.pathData;
+                                if (isSimplified && simplificationLevel > 0) {
+                                    // Simple path simplification - reduce precision
+                                    const precision = Math.max(0, 2 - Math.floor(simplificationLevel * 2));
+                                    pathData = path.pathData.replace(/-?\d+\.?\d*/g, (match) => {
+                                        return parseFloat(parseFloat(match).toFixed(precision)).toString();
+                                    });
+                                }
+
                                 return (
                                     <path
                                         key={objectId}
                                         data-object-id={objectId}
-                                        d={path.pathData}
-                                        fill={path.style?.fill || "none"}
-                                        stroke={path.style?.stroke || "#007ACC"}
-                                        strokeWidth={path.style?.strokeWidth || 2}
-                                        strokeDasharray={path.style?.strokeDasharray?.join(" ") || "none"}
+                                        d={pathData}
+                                        fill={
+                                            simplified
+                                                ? FillUtils.toSVGValue(path.style?.fill || "none")
+                                                : FillUtils.toSVGValue(path.style?.fill || "none")
+                                        }
+                                        stroke={
+                                            simplified
+                                                ? FillUtils.toSVGValue(path.style?.fill || "#007ACC")
+                                                : FillUtils.toSVGValue(path.style?.stroke || "#007ACC")
+                                        }
+                                        strokeWidth={
+                                            simplified
+                                                ? Math.max(1, (path.style?.strokeWidth || 2) * 0.5)
+                                                : path.style?.strokeWidth || 2
+                                        }
+                                        strokeDasharray={
+                                            simplified ? "none" : path.style?.strokeDasharray?.join(" ") || "none"
+                                        }
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         opacity={path.opacity}
                                         transform={transform}
+                                        filter={filterId ? `url(#${filterId})` : undefined}
                                         className={cn("canvas-object canvas-object--path", {
                                             "canvas-object--selected": selection.objectIds.includes(objectId),
                                             "canvas-object--creating": interaction.currentPathId === objectId,
+                                            "canvas-object--simplified": simplified,
                                         })}
                                         style={{
                                             cursor: selectedTool === "select" ? "move" : "default",
@@ -2323,6 +2501,21 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
         [objects, selection.objectIds, selectObjects, updateObject]
     );
 
+    // Performance monitoring effect
+    useEffect(() => {
+        if (process.env.NODE_ENV === "development") {
+            logMetrics();
+        }
+    }, [visibleObjects, logMetrics]);
+
+    // Performance monitoring for render cycles
+    useEffect(() => {
+        startFrame();
+        return () => {
+            endFrame();
+        };
+    });
+
     // Get selected objects for measurements
     const selectedObjects = selection.objectIds
         .map((id) => objects[id])
@@ -2360,6 +2553,9 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
                 onMouseUp={handleMouseUp}
                 onDoubleClick={handleDoubleClick}
                 onWheel={handleWheel}>
+                {/* Definitions for gradients, patterns, and filters */}
+                <defs id="canvas-definitions">{renderEffectFilters()}</defs>
+
                 {renderGrid()}
 
                 {/* Smart guides layer */}
@@ -2391,6 +2587,17 @@ export const Canvas: React.FC<CanvasProps> = ({ className }) => {
 
             {/* UI overlay */}
             <div className="canvas-zoom-indicator">{Math.round(viewport.zoom * 100)}%</div>
+
+            {/* Performance metrics (development only) */}
+            {process.env.NODE_ENV === "development" && (
+                <div className="canvas-performance-metrics">
+                    <div>
+                        Objects: {metrics.visibleObjects}/{metrics.visibleObjects + metrics.culledObjects}
+                    </div>
+                    <div>FPS: {metrics.frameRate}</div>
+                    {isPerformanceMode && <div className="performance-mode-indicator">Performance Mode</div>}
+                </div>
+            )}
         </div>
     );
 };

@@ -10,7 +10,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setThemeState] = useState<Theme>(() => {
         // Check localStorage first, fallback to system preference
         const saved = localStorage.getItem("icon-creator-theme") as Theme;
-        if (saved && (saved === "light" || saved === "dark")) {
+        if (saved && (saved === "light" || saved === "dark" || saved === "auto" || saved === "custom")) {
             return saved;
         }
 
@@ -29,14 +29,35 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     };
 
     const toggleTheme = () => {
+        // Simple toggle between light and dark only
         setTheme(theme === "light" ? "dark" : "light");
     };
 
     const applyThemeToDOM = (themeToApply: Theme) => {
-        if (themeToApply === "light") {
-            document.documentElement.setAttribute("data-theme", "light");
-        } else {
-            document.documentElement.removeAttribute("data-theme");
+        const root = document.documentElement;
+
+        switch (themeToApply) {
+            case "light":
+                root.setAttribute("data-theme", "light");
+                break;
+            case "dark":
+                root.removeAttribute("data-theme");
+                break;
+            case "auto":
+                // Apply based on system preference
+                const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                if (prefersDark) {
+                    root.removeAttribute("data-theme");
+                } else {
+                    root.setAttribute("data-theme", "light");
+                }
+                break;
+            case "custom":
+                // Custom theme handling will be done by ThemeSettings component
+                root.setAttribute("data-theme", "custom");
+                break;
+            default:
+                root.removeAttribute("data-theme");
         }
     };
 
@@ -44,19 +65,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         applyThemeToDOM(theme);
     }, [theme]);
 
-    // Listen for system theme changes
+    // Listen for system theme changes when in auto mode
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
         const handleChange = (e: MediaQueryListEvent) => {
-            // Only auto-switch if no theme is saved in localStorage
-            if (!localStorage.getItem("icon-creator-theme")) {
-                setTheme(e.matches ? "dark" : "light");
+            // Only auto-switch if theme is set to auto or no theme is saved
+            const currentTheme = localStorage.getItem("icon-creator-theme");
+            if (currentTheme === "auto" || !currentTheme) {
+                applyThemeToDOM(theme === "auto" ? "auto" : e.matches ? "dark" : "light");
             }
         };
 
         mediaQuery.addEventListener("change", handleChange);
         return () => mediaQuery.removeEventListener("change", handleChange);
-    }, []);
+    }, [theme]);
 
     const value: ThemeContextType = {
         theme,

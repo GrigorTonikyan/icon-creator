@@ -24,19 +24,19 @@
     }
 
     &:disabled,
-    &.Button--disabled {
+    &.disabled {
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
     }
 
     /* Variants */
-    &.Button--primary {
+    &.primary {
         background: var(--accent-primary);
         color: var(--accent-text);
         border: 1px solid var(--accent-primary);
 
-        &:hover:not(.Button--disabled) {
+        &:hover:not(.disabled) {
             background: var(--accent-primary-hover);
             border-color: var(--accent-primary-hover);
         }
@@ -46,12 +46,12 @@
         }
     }
 
-    &.Button--secondary {
+    &.secondary {
         background: var(--bg-secondary);
         color: var(--text-primary);
         border: 1px solid var(--border-color);
 
-        &:hover:not(.Button--disabled) {
+        &:hover:not(.disabled) {
             background: var(--bg-tertiary);
             border-color: var(--border-color-hover);
         }
@@ -61,70 +61,70 @@
         }
     }
 
-    &.Button--ghost {
+    &.ghost {
         background: transparent;
         color: var(--text-primary);
         border: 1px solid transparent;
 
-        &:hover:not(.Button--disabled) {
+        &:hover:not(.disabled) {
             background: var(--bg-tertiary);
             border-color: var(--border-color);
         }
     }
 
-    &.Button--icon {
+    &.icon {
         background: transparent;
         color: var(--text-primary);
         border: 1px solid var(--border-color);
         padding: var(--spacing-sm);
         aspect-ratio: 1;
 
-        &:hover:not(.Button--disabled) {
+        &:hover:not(.disabled) {
             background: var(--bg-tertiary);
             border-color: var(--border-color-hover);
         }
     }
 
     /* Sizes */
-    &.Button--sm {
+    &.sm {
         padding: var(--spacing-xs) var(--spacing-sm);
         font-size: var(--font-size-sm);
         min-height: 2rem;
     }
 
-    &.Button--md {
+    &.md {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: var(--font-size-base);
         min-height: 2.5rem;
     }
 
-    &.Button--lg {
+    &.lg {
         padding: var(--spacing-md) var(--spacing-lg);
         font-size: var(--font-size-lg);
         min-height: 3rem;
     }
 
     /* Icon button size overrides */
-    &.Button--icon.Button--sm {
+    &.icon.sm {
         width: 2rem;
         height: 2rem;
         padding: var(--spacing-xs);
     }
 
-    &.Button--icon.Button--md {
+    &.icon.md {
         width: 2.5rem;
         height: 2.5rem;
         padding: var(--spacing-sm);
     }
 
-    &.Button--icon.Button--lg {
+    &.icon.lg {
         width: 3rem;
         height: 3rem;
         padding: var(--spacing-sm);
     }
 
     /* Loading state */
-    &.Button--loading {
+    &.loading {
         cursor: wait;
     }
 

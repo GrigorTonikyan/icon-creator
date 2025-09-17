@@ -1,0 +1,373 @@
+.KeyboardShortcutSettings {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--surface-primary);
+    border-radius: var(--border-radius-medium);
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-medium);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--surface-secondary);
+}
+
+.header h2 {
+    margin: 0;
+    font-size: var(--font-size-large);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: var(--font-size-xlarge);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xsmall);
+    border-radius: var(--border-radius-small);
+    transition: all var(--transition-fast);
+
+    &:hover {
+        background: var(--surface-hover);
+        color: var(--text-primary);
+    }
+}
+
+/* Presets Section */
+.presets-section {
+    padding: var(--spacing-medium);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.presets-section h3 {
+    margin: 0 0 var(--spacing-small) 0;
+    font-size: var(--font-size-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+.preset-controls {
+    display: flex;
+    gap: var(--spacing-small);
+    align-items: center;
+}
+
+.preset-select {
+    flex: 1;
+    padding: var(--spacing-small);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-small);
+}
+
+.create-preset-button {
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--button-primary-background);
+    color: var(--button-primary-text);
+    border: none;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+    transition: background var(--transition-fast);
+
+    &:hover {
+        background: var(--button-primary-background-hover);
+    }
+}
+
+.create-preset-form {
+    margin-top: var(--spacing-medium);
+    padding: var(--spacing-medium);
+    background: var(--surface-secondary);
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--border-color);
+}
+
+.preset-name-input,
+.preset-description-input {
+    width: 100%;
+    padding: var(--spacing-small);
+    margin-bottom: var(--spacing-small);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-small);
+}
+
+.create-preset-buttons {
+    display: flex;
+    gap: var(--spacing-small);
+    justify-content: flex-end;
+}
+
+.create-button {
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--button-primary-background);
+    color: var(--button-primary-text);
+    border: none;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+}
+
+.cancel-button {
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--button-secondary-background);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+}
+
+/* Search Section */
+.search-section {
+    display: flex;
+    gap: var(--spacing-small);
+    padding: var(--spacing-medium);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-input {
+    flex: 1;
+    padding: var(--spacing-small);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-small);
+}
+
+.category-select {
+    padding: var(--spacing-small);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-small);
+    min-width: 150px;
+}
+
+/* Shortcuts List */
+.shortcuts-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.shortcuts-header {
+    display: grid;
+    grid-template-columns: 1fr 200px 180px;
+    gap: var(--spacing-small);
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--surface-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+}
+
+.shortcut-item {
+    display: grid;
+    grid-template-columns: 1fr 200px 180px;
+    gap: var(--spacing-small);
+    padding: var(--spacing-medium);
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+
+    &:hover {
+        background: var(--surface-hover);
+    }
+
+    &.editing {
+        background: var(--surface-active);
+    }
+
+    &.disabled {
+        opacity: 0.6;
+    }
+}
+
+.shortcut-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.shortcut-name .name {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    font-size: var(--font-size-small);
+}
+
+.shortcut-name .description {
+    display: block;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xsmall);
+    margin-top: var(--spacing-xsmall);
+}
+
+.shortcut-keys {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-small);
+    color: var(--text-primary);
+}
+
+.shortcut-actions {
+    display: flex;
+    gap: var(--spacing-small);
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Shortcut Editor */
+.shortcut-editor {
+    grid-column: 1 / -1;
+    margin-top: var(--spacing-small);
+}
+
+.current-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xsmall);
+    margin-bottom: var(--spacing-small);
+}
+
+.key-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xsmall);
+    padding: var(--spacing-xsmall) var(--spacing-small);
+    background: var(--surface-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xsmall);
+    color: var(--text-primary);
+}
+
+.remove-key {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+    line-height: 1;
+    padding: 0;
+
+    &:hover {
+        color: var(--text-danger);
+    }
+}
+
+.key-input-section {
+    display: flex;
+    gap: var(--spacing-small);
+    margin-bottom: var(--spacing-small);
+}
+
+.key-input {
+    flex: 1;
+    padding: var(--spacing-small);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-small);
+}
+
+.add-key-button {
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--button-primary-background);
+    color: var(--button-primary-text);
+    border: none;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+}
+
+.conflict-warning {
+    padding: var(--spacing-small);
+    background: var(--background-warning);
+    color: var(--text-warning);
+    border-radius: var(--border-radius-small);
+    font-size: var(--font-size-small);
+    margin-bottom: var(--spacing-small);
+}
+
+.editor-actions {
+    display: flex;
+    gap: var(--spacing-small);
+}
+
+.save-button {
+    padding: var(--spacing-small) var(--spacing-medium);
+    background: var(--button-primary-background);
+    color: var(--button-primary-text);
+    border: none;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+}
+
+/* Controls */
+.enable-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xsmall);
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.enable-toggle input[type="checkbox"] {
+    margin: 0;
+}
+
+.edit-button,
+.reset-button {
+    padding: var(--spacing-xsmall) var(--spacing-small);
+    background: var(--button-secondary-background);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    font-size: var(--font-size-xsmall);
+    transition: all var(--transition-fast);
+
+    &:hover {
+        background: var(--button-secondary-background-hover);
+    }
+}
+
+.reset-button {
+    background: var(--background-warning);
+    color: var(--text-warning);
+    border-color: var(--border-warning);
+
+    &:hover {
+        background: var(--background-warning-hover);
+    }
+}
+
+.no-shortcuts {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xlarge);
+    color: var(--text-secondary);
+    font-size: var(--font-size-medium);
+    text-align: center;
+}

@@ -1,0 +1,492 @@
+/* Animation Panel Styles */
+.animation-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-default);
+    padding: var(--spacing-md);
+    min-height: 300px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Header */
+.animation-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.animation-panel__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.animation-panel__create-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__create-button:hover {
+    background: var(--accent-bg-hover);
+}
+
+/* Timeline Controls */
+.animation-panel__timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.animation-panel__play-button,
+.animation-panel__stop-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__play-button:hover,
+.animation-panel__stop-button:hover {
+    background: var(--button-primary-bg-hover);
+}
+
+.animation-panel__play-button:disabled,
+.animation-panel__stop-button:disabled {
+    background: var(--button-disabled-bg);
+    color: var(--button-disabled-text);
+    cursor: not-allowed;
+}
+
+.animation-panel__time {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.animation-panel__speed-select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--border-default);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+/* Timeline Scrubber */
+.animation-panel__timeline {
+    margin-bottom: var(--spacing-md);
+}
+
+.animation-panel__timeline-track {
+    position: relative;
+    height: 20px;
+    cursor: pointer;
+    margin-bottom: var(--spacing-xs);
+}
+
+.animation-panel__timeline-background {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border-subtle);
+    border-radius: 2px;
+}
+
+.animation-panel__timeline-progress {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    height: 4px;
+    background: var(--accent-bg);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+.animation-panel__timeline-handle {
+    position: absolute;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    background: var(--accent-bg);
+    border: 2px solid var(--background-primary);
+    border-radius: 50%;
+    transform: translateX(-50%);
+    cursor: grab;
+    transition: left 0.1s ease;
+}
+
+.animation-panel__timeline-handle:active {
+    cursor: grabbing;
+}
+
+.animation-panel__timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+/* Sections */
+.animation-panel__section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.animation-panel__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.animation-panel__section-header h4 {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.animation-panel__section-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.animation-panel__add-track-select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--border-default);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.animation-panel__add-track-select:disabled {
+    background: var(--background-disabled);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+}
+
+.animation-panel__add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__add-button:hover {
+    background: var(--button-secondary-bg-hover);
+}
+
+.animation-panel__add-button:disabled {
+    background: var(--button-disabled-bg);
+    color: var(--button-disabled-text);
+    cursor: not-allowed;
+}
+
+/* Tracks */
+.animation-panel__tracks {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+}
+
+.animation-panel__track {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__track:last-child {
+    border-bottom: none;
+}
+
+.animation-panel__track:hover {
+    background: var(--background-hover);
+}
+
+.animation-panel__track--selected {
+    background: var(--selection-bg);
+    border-color: var(--selection-border);
+}
+
+.animation-panel__track--disabled {
+    opacity: 0.6;
+}
+
+.animation-panel__track-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-xs);
+}
+
+.animation-panel__track-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.animation-panel__track-enabled {
+    margin: 0;
+}
+
+.animation-panel__track-name {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.animation-panel__track-property {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.animation-panel__track-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.animation-panel__track-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__track-button:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+/* Keyframes */
+.animation-panel__keyframes {
+    position: relative;
+    height: 20px;
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.animation-panel__keyframe {
+    position: absolute;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    cursor: pointer;
+    transform: translateX(-50%);
+}
+
+.animation-panel__keyframe-handle {
+    width: 100%;
+    height: 100%;
+    background: var(--accent-bg);
+    border: 1px solid var(--background-primary);
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__keyframe:hover .animation-panel__keyframe-handle {
+    background: var(--accent-bg-hover);
+}
+
+.animation-panel__keyframe--selected .animation-panel__keyframe-handle {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 2px var(--accent-bg-alpha);
+}
+
+/* Motion Paths */
+.animation-panel__motion-paths {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+}
+
+.animation-panel__motion-path {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.animation-panel__motion-path:last-child {
+    border-bottom: none;
+}
+
+.animation-panel__motion-path-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.animation-panel__motion-path-name {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.animation-panel__motion-path-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.animation-panel__motion-path-field {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.animation-panel__motion-path-input {
+    width: 60px;
+    padding: var(--spacing-xs);
+    border: 1px solid var(--border-default);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.animation-panel__motion-path-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.animation-panel__motion-path-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.animation-panel__motion-path-button:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+/* Options */
+.animation-panel__options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.animation-panel__option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.animation-panel__option input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Empty States */
+.animation-panel__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.animation-panel__empty p {
+    margin: var(--spacing-xs) 0;
+    font-size: var(--font-size-sm);
+}
+
+.animation-panel__empty p:first-of-type {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .animation-panel {
+        padding: var(--spacing-sm);
+        max-height: 60vh;
+    }
+
+    .animation-panel__timeline-controls {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+
+    .animation-panel__section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .animation-panel__motion-path-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+}

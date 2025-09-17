@@ -3,7 +3,7 @@
  * Provides functionality for rulers, tick marks, and distance measurements
  */
 
-import { type Point, type Bounds, type CanvasObject, type ViewportState } from "../types/editor";
+import type { Point, ViewportState, CanvasObject, Bounds } from "../types/editor";
 
 export type UnitType = "px" | "pt" | "in" | "cm" | "mm";
 

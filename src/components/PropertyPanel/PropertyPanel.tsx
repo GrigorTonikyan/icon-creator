@@ -8,8 +8,10 @@ import type {
     PropertyUpdate,
     PropertyValidationResult,
     PropertyValue,
+    FillType,
+    Effect,
 } from "../../types/editor";
-import { FormField, Icon, Input } from "../ui";
+import { FormField, Icon, Input, FillControl, EffectControl } from "../ui";
 
 import cn from "classnames";
 import "./propertyPanel.css";
@@ -108,12 +110,12 @@ const COMMON_PROPERTIES = {
         fill: {
             key: "style.fill",
             label: "Fill",
-            type: "color" as const,
+            type: "fill" as const,
         },
         stroke: {
             key: "style.stroke",
             label: "Stroke",
-            type: "color" as const,
+            type: "fill" as const,
         },
         strokeWidth: {
             key: "style.strokeWidth",
@@ -121,6 +123,11 @@ const COMMON_PROPERTIES = {
             type: "number" as const,
             min: 0,
             unit: "px",
+        },
+        effects: {
+            key: "style.effects",
+            label: "Effects",
+            type: "effects" as const,
         },
     },
     text: {
@@ -224,7 +231,7 @@ function getSchemaForObjectType(objectType: string): PropertySchema {
                     {
                         id: "style",
                         title: "Style",
-                        properties: [style.fill, style.stroke, style.strokeWidth],
+                        properties: [style.fill, style.stroke, style.strokeWidth, style.effects],
                     },
                 ],
             };
@@ -253,7 +260,7 @@ function getSchemaForObjectType(objectType: string): PropertySchema {
                     {
                         id: "style",
                         title: "Style",
-                        properties: [style.fill, style.stroke, style.strokeWidth],
+                        properties: [style.fill, style.stroke, style.strokeWidth, style.effects],
                     },
                 ],
             };
@@ -305,7 +312,7 @@ function getSchemaForObjectType(objectType: string): PropertySchema {
                     {
                         id: "style",
                         title: "Style",
-                        properties: [style.fill, style.stroke, style.strokeWidth],
+                        properties: [style.fill, style.stroke, style.strokeWidth, style.effects],
                     },
                 ],
             };
@@ -596,6 +603,45 @@ export function PropertyPanel({ className }: PropertyPanelProps) {
                                 }
                             }}
                             className={cn({ "Input--error": hasError })}
+                        />
+                    );
+
+                case "fill":
+                    return (
+                        <FillControl
+                            label={prop.label}
+                            value={currentValue as FillType}
+                            onChange={(value) => {
+                                if (isMultiSelect) {
+                                    handleBatchUpdate(prop.key, value, prop.key.includes("."));
+                                } else if (firstObject) {
+                                    handlePropertyUpdate({
+                                        objectId: firstObject.id,
+                                        property: prop.key,
+                                        value,
+                                        nested: prop.key.includes("."),
+                                    });
+                                }
+                            }}
+                        />
+                    );
+
+                case "effects":
+                    return (
+                        <EffectControl
+                            effects={(currentValue as unknown as Effect[]) || []}
+                            onChange={(value) => {
+                                if (isMultiSelect) {
+                                    handleBatchUpdate(prop.key, value, prop.key.includes("."));
+                                } else if (firstObject) {
+                                    handlePropertyUpdate({
+                                        objectId: firstObject.id,
+                                        property: prop.key,
+                                        value,
+                                        nested: prop.key.includes("."),
+                                    });
+                                }
+                            }}
                         />
                     );
 

@@ -1,0 +1,243 @@
+.EffectControl {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+
+.EffectControl__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.EffectControl__label {
+    font-weight: 500;
+    color: var(--color-text);
+    font-size: 14px;
+}
+
+.EffectControl__toggle {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.EffectControl__toggle:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+.EffectControl__toggle--expanded {
+    transform: rotate(90deg);
+}
+
+.EffectControl__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.EffectControl__content--collapsed {
+    display: none;
+}
+
+.EffectControl__effects {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.EffectControl__effect-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px;
+}
+
+.EffectControl__effect-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.EffectControl__effect-name {
+    font-weight: 500;
+    color: var(--color-text);
+    font-size: 13px;
+}
+
+.EffectControl__effect-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.EffectControl__effect-enabled {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.EffectControl__effect-remove {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--color-danger);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.EffectControl__effect-remove:hover {
+    background: var(--color-danger-background);
+}
+
+.EffectControl__effect-properties {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.EffectControl__property {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.EffectControl__property-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.EffectControl__property-input {
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-input-background);
+    color: var(--color-text);
+    font-size: 12px;
+    transition: border-color 0.2s ease;
+}
+
+.EffectControl__property-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.EffectControl__property-input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    border: none;
+    padding: 0;
+}
+
+.EffectControl__property-input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.EffectControl__property-input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.EffectControl__color-input {
+    width: 100%;
+    height: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.EffectControl__add-effect {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.EffectControl__add-select {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-input-background);
+    color: var(--color-text);
+    font-size: 12px;
+}
+
+.EffectControl__add-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.EffectControl__preview {
+    margin-top: 8px;
+    padding: 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px;
+}
+
+.EffectControl__preview-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.EffectControl__preview-sample {
+    width: 60px;
+    height: 60px;
+    background: var(--color-primary);
+    border-radius: 8px;
+    margin: 0 auto;
+}
+
+.EffectControl--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Dark theme adjustments */
+.theme-dark .EffectControl__effect-item {
+    background: var(--color-surface-elevated);
+}
+
+.theme-dark .EffectControl__preview {
+    background: var(--color-surface-elevated);
+}

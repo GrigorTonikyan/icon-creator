@@ -3,3 +3,5 @@ bun = true
 
 [serve.static]
 env = "BUN_PUBLIC_*"
+
+[test]

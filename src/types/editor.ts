@@ -35,14 +35,131 @@ export interface BaseCanvasObject {
 }
 
 // Object Types
-export type CanvasObjectType = "rectangle" | "circle" | "text" | "path" | "group";
+export type CanvasObjectType = "rectangle" | "circle" | "text" | "path" | "group" | "component" | "symbol";
+
+// Gradient and Pattern Types
+export interface LinearGradient {
+    type: "linear";
+    id: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    stops: GradientStop[];
+}
+
+export interface RadialGradient {
+    type: "radial";
+    id: string;
+    cx: number;
+    cy: number;
+    r: number;
+    fx?: number;
+    fy?: number;
+    stops: GradientStop[];
+}
+
+export interface ConicGradient {
+    type: "conic";
+    id: string;
+    cx: number;
+    cy: number;
+    startAngle: number; // degrees
+    stops: GradientStop[];
+}
+
+export interface GradientStop {
+    offset: number; // 0-1
+    color: string;
+    opacity?: number;
+}
+
+export interface Pattern {
+    type: "pattern";
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    patternUnits: "userSpaceOnUse" | "objectBoundingBox";
+    patternContentUnits: "userSpaceOnUse" | "objectBoundingBox";
+    patternTransform?: string;
+    href?: string; // For image patterns
+    elements?: CanvasObject[]; // For vector patterns
+    // Pattern presets
+    patternType?: "dots" | "lines" | "grid" | "diagonal" | "checkerboard" | "custom";
+}
+
+export type Gradient = LinearGradient | RadialGradient | ConicGradient;
+export type FillType = string | Gradient | Pattern;
+
+// Effects Types
+export interface DropShadow {
+    type: "drop-shadow";
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+    opacity?: number;
+}
+
+export interface InnerShadow {
+    type: "inner-shadow";
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+    opacity?: number;
+}
+
+export interface Glow {
+    type: "glow";
+    blur: number;
+    color: string;
+    opacity?: number;
+    spread?: number; // Additional spread distance
+}
+
+export interface Blur {
+    type: "blur";
+    radius: number;
+}
+
+export interface Brightness {
+    type: "brightness";
+    value: number; // 0-2, where 1 is normal
+}
+
+export interface Contrast {
+    type: "contrast";
+    value: number; // 0-2, where 1 is normal
+}
+
+export interface Saturation {
+    type: "saturation";
+    value: number; // 0-2, where 1 is normal
+}
+
+export interface HueRotate {
+    type: "hue-rotate";
+    degrees: number; // 0-360
+}
+
+export type EffectType = DropShadow | InnerShadow | Glow | Blur | Brightness | Contrast | Saturation | HueRotate;
+
+export interface Effect {
+    id: string;
+    enabled: boolean;
+    effect: EffectType;
+}
 
 // Shape Objects
 export interface ShapeStyle {
-    fill?: string;
-    stroke?: string;
+    fill?: FillType;
+    stroke?: FillType;
     strokeWidth?: number;
     strokeDasharray?: number[];
+    effects?: Effect[];
 }
 
 export interface RectangleObject extends BaseCanvasObject {
@@ -60,7 +177,7 @@ export interface CircleObject extends BaseCanvasObject {
 }
 
 // Text Object
-export interface TextStyle {
+export interface TextStyle extends ShapeStyle {
     fontFamily: string;
     fontSize: number;
     fontWeight: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
@@ -101,7 +218,14 @@ export interface GroupObject extends BaseCanvasObject {
 }
 
 // Union type for all canvas objects
-export type CanvasObject = RectangleObject | CircleObject | TextObject | PathObject | GroupObject;
+export type CanvasObject =
+    | RectangleObject
+    | CircleObject
+    | TextObject
+    | PathObject
+    | GroupObject
+    | ComponentInstance
+    | SymbolInstance;
 
 // Layer System
 export interface Layer {
@@ -301,6 +425,17 @@ export interface EditorState {
 
     // Auto-save
     autoSave: AutoSaveState;
+
+    // Component Library
+    componentLibrary: ComponentLibraryState;
+
+    // Symbol Library
+    symbolLibrary: SymbolLibraryState;
+
+    // Animation System
+    animationTimeline: AnimationTimeline | null;
+    animationPreview: AnimationPreview | null;
+    isAnimationPanelOpen: boolean;
 }
 
 // History System Types
@@ -349,6 +484,8 @@ export interface SerializableEditorState {
     gridSize: number;
     smartGuides: SmartGuidesState;
     manualGuides: ManualGuidesState;
+    componentLibrary: ComponentLibraryState;
+    symbolLibrary: SymbolLibraryState;
 }
 
 export interface ProjectMetadata {
@@ -437,7 +574,57 @@ export type EditorAction =
     | { type: "LOAD_PROJECT"; payload: ProjectData }
     | { type: "SET_PROJECT_METADATA"; payload: Partial<ProjectMetadata> }
     | { type: "UPDATE_AUTO_SAVE_SETTINGS"; payload: Partial<AutoSaveSettings> }
-    | { type: "SET_AUTO_SAVE_STATE"; payload: Partial<AutoSaveState> };
+    | { type: "SET_AUTO_SAVE_STATE"; payload: Partial<AutoSaveState> }
+    | { type: "LOAD_COMPONENT_LIBRARY"; payload: ComponentLibrary }
+    | { type: "SET_ACTIVE_COMPONENT_LIBRARY"; payload: string }
+    | { type: "SET_COMPONENT_LIBRARY_SEARCH"; payload: string }
+    | { type: "SET_COMPONENT_LIBRARY_CATEGORY"; payload: string | undefined }
+    | { type: "TOGGLE_COMPONENT_LIBRARY_PANEL" }
+    | { type: "SAVE_COMPONENT"; payload: ComponentSaveOptions & { objectIds: string[] } }
+    | {
+          type: "INSTANTIATE_COMPONENT";
+          payload: { templateId: string; position?: Point; propertyOverrides?: Record<string, any> };
+      }
+    | { type: "UPDATE_COMPONENT_INSTANCE"; payload: { id: string; propertyOverrides: Record<string, any> } }
+    // Symbol Library Actions
+    | { type: "LOAD_SYMBOL_LIBRARY"; payload: SymbolLibrary }
+    | { type: "SET_ACTIVE_SYMBOL_LIBRARY"; payload: string }
+    | { type: "SET_SYMBOL_LIBRARY_SEARCH"; payload: string }
+    | { type: "SET_SYMBOL_LIBRARY_CATEGORY"; payload: string | undefined }
+    | { type: "TOGGLE_SYMBOL_LIBRARY_PANEL" }
+    | { type: "SET_SYMBOL_SYNC_MODE"; payload: "auto" | "manual" }
+    | { type: "SAVE_SYMBOL"; payload: SymbolSaveOptions & { objectId: string } }
+    | {
+          type: "INSTANTIATE_SYMBOL";
+          payload: { symbolId: string; position?: Point; propertyOverrides?: Record<string, any> };
+      }
+    | { type: "UPDATE_SYMBOL_INSTANCE"; payload: { id: string; propertyOverrides: Record<string, any> } }
+    | { type: "SYNC_SYMBOL_INSTANCE"; payload: { id: string; forceSync?: boolean } }
+    | { type: "DETACH_SYMBOL_INSTANCE"; payload: { id: string } }
+    | { type: "UPDATE_SYMBOL_MASTER"; payload: { symbolId: string; masterObject: CanvasObject } }
+
+    // Animation actions
+    | { type: "CREATE_ANIMATION_TIMELINE"; payload: { timeline: AnimationTimeline } }
+    | { type: "UPDATE_ANIMATION_TIMELINE"; payload: { timeline: Partial<AnimationTimeline> } }
+    | { type: "DELETE_ANIMATION_TIMELINE" }
+    | { type: "ADD_ANIMATION_TRACK"; payload: { track: AnimationTrack } }
+    | { type: "UPDATE_ANIMATION_TRACK"; payload: { trackId: string; track: Partial<AnimationTrack> } }
+    | { type: "DELETE_ANIMATION_TRACK"; payload: { trackId: string } }
+    | { type: "ADD_KEYFRAME"; payload: { trackId: string; keyframe: AnimationKeyframe } }
+    | {
+          type: "UPDATE_KEYFRAME";
+          payload: { trackId: string; keyframeId: string; keyframe: Partial<AnimationKeyframe> };
+      }
+    | { type: "DELETE_KEYFRAME"; payload: { trackId: string; keyframeId: string } }
+    | { type: "ADD_MOTION_PATH"; payload: { motionPath: MotionPath } }
+    | { type: "UPDATE_MOTION_PATH"; payload: { pathId: string; motionPath: Partial<MotionPath> } }
+    | { type: "DELETE_MOTION_PATH"; payload: { pathId: string } }
+    | { type: "PLAY_ANIMATION" }
+    | { type: "PAUSE_ANIMATION" }
+    | { type: "STOP_ANIMATION" }
+    | { type: "SEEK_ANIMATION"; payload: { time: number } }
+    | { type: "SET_ANIMATION_PREVIEW"; payload: { preview: AnimationPreview | null } }
+    | { type: "TOGGLE_ANIMATION_PANEL"; payload: { isOpen: boolean } };
 
 // History action descriptions for UI display
 export const ACTION_DESCRIPTIONS: Record<string, string> = {
@@ -476,6 +663,41 @@ export const ACTION_DESCRIPTIONS: Record<string, string> = {
     DELETE_MANUAL_GUIDE: "Delete guide",
     CLEAR_MANUAL_GUIDES: "Clear all guides",
     TOGGLE_MANUAL_GUIDES: "Toggle guides",
+    SAVE_COMPONENT: "Save component",
+    INSTANTIATE_COMPONENT: "Instantiate component",
+    UPDATE_COMPONENT_INSTANCE: "Update component properties",
+    // Symbol actions
+    LOAD_SYMBOL_LIBRARY: "Load symbol library",
+    SET_ACTIVE_SYMBOL_LIBRARY: "Set active symbol library",
+    SET_SYMBOL_LIBRARY_SEARCH: "Search symbols",
+    SET_SYMBOL_LIBRARY_CATEGORY: "Filter symbol category",
+    TOGGLE_SYMBOL_LIBRARY_PANEL: "Toggle symbol panel",
+    SET_SYMBOL_SYNC_MODE: "Set symbol sync mode",
+    SAVE_SYMBOL: "Save symbol",
+    INSTANTIATE_SYMBOL: "Instantiate symbol",
+    UPDATE_SYMBOL_INSTANCE: "Update symbol properties",
+    SYNC_SYMBOL_INSTANCE: "Sync symbol instance",
+    DETACH_SYMBOL_INSTANCE: "Detach symbol instance",
+    UPDATE_SYMBOL_MASTER: "Update symbol master",
+    // Animation actions
+    CREATE_ANIMATION_TIMELINE: "Create animation timeline",
+    UPDATE_ANIMATION_TIMELINE: "Update animation timeline",
+    DELETE_ANIMATION_TIMELINE: "Delete animation timeline",
+    ADD_ANIMATION_TRACK: "Add animation track",
+    UPDATE_ANIMATION_TRACK: "Update animation track",
+    DELETE_ANIMATION_TRACK: "Delete animation track",
+    ADD_KEYFRAME: "Add keyframe",
+    UPDATE_KEYFRAME: "Update keyframe",
+    DELETE_KEYFRAME: "Delete keyframe",
+    ADD_MOTION_PATH: "Add motion path",
+    UPDATE_MOTION_PATH: "Update motion path",
+    DELETE_MOTION_PATH: "Delete motion path",
+    PLAY_ANIMATION: "Play animation",
+    PAUSE_ANIMATION: "Pause animation",
+    STOP_ANIMATION: "Stop animation",
+    SEEK_ANIMATION: "Seek animation",
+    SET_ANIMATION_PREVIEW: "Set animation preview",
+    TOGGLE_ANIMATION_PANEL: "Toggle animation panel",
 };
 
 // Event Types
@@ -534,6 +756,8 @@ export type PropertyControlType =
     | "number"
     | "text"
     | "color"
+    | "fill"
+    | "effects"
     | "select"
     | "slider"
     | "checkbox"
@@ -541,7 +765,7 @@ export type PropertyControlType =
     | "position";
 
 // Property value types
-export type PropertyValue = string | number | boolean | string[];
+export type PropertyValue = string | number | boolean | string[] | FillType | Effect[];
 
 // Property definition for dynamic controls
 export interface PropertyDefinition {
@@ -689,3 +913,214 @@ export const COMMON_PROPERTIES = {
         },
     },
 } as const;
+
+// Component Library Types
+export interface ComponentTemplate {
+    id: string;
+    name: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    thumbnail?: string; // Base64 encoded thumbnail image
+    objects: CanvasObject[]; // Array of objects that make up this component
+    metadata: {
+        createdAt: Date;
+        updatedAt: Date;
+        author?: string;
+        version: string;
+        bounds: Bounds; // Bounding box of the component
+    };
+    properties?: ComponentProperty[]; // Customizable properties
+}
+
+export interface ComponentProperty {
+    id: string;
+    name: string;
+    type: "color" | "number" | "text" | "boolean" | "select";
+    defaultValue: string | number | boolean;
+    description?: string;
+    options?: { value: string | number; label: string }[]; // For select type
+    target: {
+        objectId: string; // Which object this property affects
+        path: string; // Path to the property (e.g., "style.fill", "transform.x")
+    };
+}
+
+export interface ComponentInstance extends BaseCanvasObject {
+    type: "component";
+    templateId: string;
+    propertyOverrides: Record<string, string | number | boolean>; // Key-value pairs for overridden properties
+}
+
+export interface ComponentCategory {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    parentId?: string; // For nested categories
+    order: number;
+}
+
+export interface ComponentLibrary {
+    id: string;
+    name: string;
+    description?: string;
+    version: string;
+    categories: ComponentCategory[];
+    templates: ComponentTemplate[];
+    metadata: {
+        createdAt: Date;
+        updatedAt: Date;
+        author?: string;
+    };
+}
+
+// Component Library Events
+export interface ComponentLibraryState {
+    libraries: ComponentLibrary[];
+    activeLibraryId?: string;
+    searchQuery: string;
+    selectedCategoryId?: string;
+    isLibraryPanelOpen: boolean;
+}
+
+export interface ComponentSaveOptions {
+    name: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    generateThumbnail?: boolean;
+    createCustomProperties?: boolean;
+}
+
+// Symbol System Types
+export interface Symbol {
+    id: string;
+    name: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    thumbnail?: string; // Base64 encoded thumbnail image
+    masterObject: CanvasObject; // The master object definition
+    metadata: {
+        createdAt: Date;
+        updatedAt: Date;
+        author?: string;
+        version: string;
+        bounds: Bounds; // Bounding box of the symbol
+        isLocked: boolean; // Whether the symbol master can be edited
+    };
+    properties?: SymbolProperty[]; // Customizable properties for instances
+}
+
+export interface SymbolProperty {
+    id: string;
+    name: string;
+    type: "color" | "number" | "text" | "boolean" | "select";
+    defaultValue: string | number | boolean;
+    description?: string;
+    options?: { value: string | number; label: string }[]; // For select type
+    target: {
+        path: string; // Path to the property (e.g., "style.fill", "transform.x")
+    };
+}
+
+export interface SymbolInstance extends BaseCanvasObject {
+    type: "symbol";
+    symbolId: string;
+    propertyOverrides: Record<string, string | number | boolean>; // Key-value pairs for overridden properties
+    isDetached: boolean; // Whether this instance is detached from the master symbol
+    lastSyncedVersion: string; // Version of the master symbol this instance was last synced with
+}
+
+export interface SymbolLibrary {
+    id: string;
+    name: string;
+    description?: string;
+    version: string;
+    categories: ComponentCategory[]; // Reuse existing category structure
+    symbols: Symbol[];
+    metadata: {
+        createdAt: Date;
+        updatedAt: Date;
+        author?: string;
+    };
+}
+
+// Symbol Library State
+export interface SymbolLibraryState {
+    libraries: SymbolLibrary[];
+    activeLibraryId?: string;
+    searchQuery: string;
+    selectedCategoryId?: string;
+    isSymbolPanelOpen: boolean;
+    syncMode: "auto" | "manual"; // How symbol instances should sync with masters
+}
+
+export interface SymbolSaveOptions {
+    name: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    generateThumbnail?: boolean;
+    lockMaster?: boolean;
+    createCustomProperties?: boolean;
+}
+
+// Animation System Types
+export interface AnimationKeyframe {
+    id: string;
+    time: number; // Time in seconds
+    properties: Record<string, unknown>; // Animated property values
+    easing?: AnimationEasing;
+}
+
+export interface AnimationEasing {
+    type: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "cubic-bezier";
+    values?: [number, number, number, number]; // For cubic-bezier
+}
+
+export interface AnimationTrack {
+    id: string;
+    objectId: string;
+    property: string; // Property path (e.g., "transform.x", "style.fill")
+    keyframes: AnimationKeyframe[];
+    enabled: boolean;
+}
+
+export interface AnimationTimeline {
+    id: string;
+    name: string;
+    duration: number; // Duration in seconds
+    tracks: AnimationTrack[];
+    loop: boolean;
+    autoPlay: boolean;
+    currentTime: number;
+    isPlaying: boolean;
+}
+
+export interface MotionPath {
+    id: string;
+    objectId: string;
+    path: string; // SVG path data
+    duration: number;
+    offset: number; // Start offset (0-1)
+    rotate: boolean; // Rotate object along path
+    easing?: AnimationEasing;
+}
+
+export interface AnimationPreview {
+    timeline: AnimationTimeline;
+    motionPaths: MotionPath[];
+    showKeyframes: boolean;
+    showPaths: boolean;
+    playbackSpeed: number; // Multiplier (0.1x to 2x)
+}
+
+export interface AnimationExportOptions {
+    format: "css" | "svg" | "lottie" | "gif";
+    quality?: "low" | "medium" | "high";
+    fps?: number;
+    dimensions?: { width: number; height: number };
+    includeMotionPaths?: boolean;
+}

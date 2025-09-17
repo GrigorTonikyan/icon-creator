@@ -1,8 +1,17 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from "react";
 import {
     ACTION_DESCRIPTIONS,
+    type AnimationTimeline,
+    type AnimationTrack,
+    type AnimationKeyframe,
+    type AnimationPreview,
+    type MotionPath,
     type AutoSaveSettings,
     type CanvasObject,
+    type ComponentInstance,
+    type ComponentLibrary,
+    type ComponentSaveOptions,
+    type ComponentTemplate,
     type CoordinateDisplay,
     type EditorAction,
     type EditorState,
@@ -13,18 +22,25 @@ import {
     type ManualGuide,
     type ManualGuidesState,
     type PathOperationType,
+    type Point,
     type PrecisionInputState,
     type ProjectData,
     type ProjectMetadata,
     type SerializableEditorState,
     type SmartGuide,
     type SmartGuidesState,
+    type SymbolInstance,
+    type SymbolLibrary,
+    type SymbolSaveOptions,
     type ToolType,
     type UnitType,
     type ViewportState,
 } from "../types/editor";
 import { calculateNewOrder } from "../utils/layerUtils";
 import { createEmptyProject, deserializeProject, generateProjectThumbnail, serializeProject } from "../utils/project";
+import { AnimationUtils } from "../utils/animationUtils";
+import { ComponentLibraryUtils } from "../utils/componentLibraryUtils";
+import { SymbolLibraryUtils } from "../utils/symbolLibraryUtils";
 import {
     alignLeft,
     alignRight,
@@ -136,6 +152,26 @@ const initialEditorState: EditorState = {
         lastSaveTime: null,
         isAutoSaving: false,
     },
+    componentLibrary: {
+        libraries: [],
+        activeLibraryId: undefined,
+        searchQuery: "",
+        selectedCategoryId: undefined,
+        isLibraryPanelOpen: false,
+    },
+    symbolLibrary: {
+        libraries: [],
+        activeLibraryId: undefined,
+        searchQuery: "",
+        selectedCategoryId: undefined,
+        isSymbolPanelOpen: false,
+        syncMode: "auto",
+    },
+
+    // Animation System
+    animationTimeline: null,
+    animationPreview: null,
+    isAnimationPanelOpen: false,
 };
 
 // History Utilities
@@ -153,6 +189,8 @@ function serializeEditorState(state: EditorState): SerializableEditorState {
         gridSize: state.gridSize,
         smartGuides: state.smartGuides,
         manualGuides: state.manualGuides,
+        componentLibrary: state.componentLibrary,
+        symbolLibrary: state.symbolLibrary,
     };
 }
 
@@ -679,7 +717,7 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
 
     // Record history for other actions (if not executing history and action should be recorded)
     const shouldRecord = shouldRecordHistory(action) && !state.history.isExecutingHistory;
-    const historyEntry = shouldRecord ? createHistoryEntry(action, state) : null;
+    let historyEntry = shouldRecord ? createHistoryEntry(action, state) : null;
 
     // Process the actual action
     let newState: EditorState;
@@ -1546,6 +1584,838 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
             break;
         }
 
+        // Component Library Actions
+        case "LOAD_COMPONENT_LIBRARY": {
+            const library = action.payload;
+            newState = {
+                ...state,
+                componentLibrary: {
+                    ...state.componentLibrary,
+                    libraries: [...state.componentLibrary.libraries.filter((lib) => lib.id !== library.id), library],
+                    activeLibraryId: state.componentLibrary.activeLibraryId || library.id,
+                },
+            };
+            break;
+        }
+
+        case "SET_ACTIVE_COMPONENT_LIBRARY": {
+            newState = {
+                ...state,
+                componentLibrary: {
+                    ...state.componentLibrary,
+                    activeLibraryId: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "SET_COMPONENT_LIBRARY_SEARCH": {
+            newState = {
+                ...state,
+                componentLibrary: {
+                    ...state.componentLibrary,
+                    searchQuery: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "SET_COMPONENT_LIBRARY_CATEGORY": {
+            newState = {
+                ...state,
+                componentLibrary: {
+                    ...state.componentLibrary,
+                    selectedCategoryId: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "TOGGLE_COMPONENT_LIBRARY_PANEL": {
+            newState = {
+                ...state,
+                componentLibrary: {
+                    ...state.componentLibrary,
+                    isLibraryPanelOpen: !state.componentLibrary.isLibraryPanelOpen,
+                },
+            };
+            break;
+        }
+
+        case "SAVE_COMPONENT": {
+            const { objectIds, ...saveOptions } = action.payload;
+            const objects = objectIds.map((id) => state.objects[id]).filter((obj): obj is CanvasObject => Boolean(obj));
+
+            if (objects.length === 0) {
+                newState = state;
+                break;
+            }
+
+            try {
+                const activeLibrary = state.componentLibrary.libraries.find(
+                    (lib) => lib.id === state.componentLibrary.activeLibraryId
+                );
+
+                if (!activeLibrary) {
+                    // Create default library if none exists
+                    const defaultLibrary = ComponentLibraryUtils.createDefaultLibrary();
+                    const component = ComponentLibraryUtils.createComponentTemplate(objects, saveOptions);
+                    defaultLibrary.templates.push(component);
+
+                    newState = {
+                        ...state,
+                        componentLibrary: {
+                            ...state.componentLibrary,
+                            libraries: [...state.componentLibrary.libraries, defaultLibrary],
+                            activeLibraryId: defaultLibrary.id,
+                        },
+                    };
+                } else {
+                    const component = ComponentLibraryUtils.createComponentTemplate(objects, saveOptions);
+                    const updatedLibrary = {
+                        ...activeLibrary,
+                        templates: [...activeLibrary.templates, component],
+                        metadata: {
+                            ...activeLibrary.metadata,
+                            updatedAt: new Date(),
+                        },
+                    };
+
+                    newState = {
+                        ...state,
+                        componentLibrary: {
+                            ...state.componentLibrary,
+                            libraries: state.componentLibrary.libraries.map((lib) =>
+                                lib.id === activeLibrary.id ? updatedLibrary : lib
+                            ),
+                        },
+                    };
+                }
+
+                historyEntry = createHistoryEntry(action, state, `Save component "${saveOptions.name}"`);
+            } catch (error) {
+                console.error("Failed to save component:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "INSTANTIATE_COMPONENT": {
+            const { templateId, position = { x: 0, y: 0 }, propertyOverrides = {} } = action.payload;
+
+            try {
+                const activeLibrary = state.componentLibrary.libraries.find(
+                    (lib) => lib.id === state.componentLibrary.activeLibraryId
+                );
+                const template = activeLibrary?.templates.find((t) => t.id === templateId);
+
+                if (!template) {
+                    newState = state;
+                    break;
+                }
+
+                const activeLayerId = state.layerSelection.activeLayerId || "default";
+                const instance = ComponentLibraryUtils.createComponentInstance(template, position, activeLayerId);
+
+                // Resolve the component instance to get the actual objects
+                const resolvedObjects = ComponentLibraryUtils.resolveComponentInstance(instance, template);
+
+                // Add the new instance objects to the current layer
+                const currentLayer = state.layers[activeLayerId];
+
+                if (!currentLayer) {
+                    newState = state;
+                    break;
+                }
+
+                const newObjects = { ...state.objects };
+                resolvedObjects.forEach((obj: CanvasObject) => {
+                    newObjects[obj.id] = obj;
+                });
+
+                const updatedLayer = {
+                    ...currentLayer,
+                    objects: [...currentLayer.objects, ...resolvedObjects.map((obj: CanvasObject) => obj.id)],
+                    updatedAt: Date.now(),
+                };
+
+                newState = {
+                    ...state,
+                    objects: newObjects,
+                    layers: {
+                        ...state.layers,
+                        [activeLayerId]: updatedLayer,
+                    },
+                    selection: { objectIds: resolvedObjects.map((obj: CanvasObject) => obj.id) },
+                };
+            } catch (error) {
+                console.error("Failed to instantiate component:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_COMPONENT_INSTANCE": {
+            const { id, propertyOverrides } = action.payload;
+            const componentInstance = state.objects[id];
+
+            if (!componentInstance || componentInstance.type !== "component") {
+                newState = state;
+                break;
+            }
+
+            try {
+                const updatedInstance = {
+                    ...componentInstance,
+                    propertyOverrides: {
+                        ...componentInstance.propertyOverrides,
+                        ...propertyOverrides,
+                    },
+                } as ComponentInstance;
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [id]: updatedInstance,
+                    },
+                };
+            } catch (error) {
+                console.error("Failed to update component instance:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        // Symbol Library Actions
+        case "LOAD_SYMBOL_LIBRARY": {
+            const library = action.payload;
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    libraries: [...state.symbolLibrary.libraries.filter((lib) => lib.id !== library.id), library],
+                    activeLibraryId: state.symbolLibrary.activeLibraryId || library.id,
+                },
+            };
+            break;
+        }
+
+        case "SET_ACTIVE_SYMBOL_LIBRARY": {
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    activeLibraryId: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "SET_SYMBOL_LIBRARY_SEARCH": {
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    searchQuery: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "SET_SYMBOL_LIBRARY_CATEGORY": {
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    selectedCategoryId: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "TOGGLE_SYMBOL_LIBRARY_PANEL": {
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    isSymbolPanelOpen: !state.symbolLibrary.isSymbolPanelOpen,
+                },
+            };
+            break;
+        }
+
+        case "SET_SYMBOL_SYNC_MODE": {
+            newState = {
+                ...state,
+                symbolLibrary: {
+                    ...state.symbolLibrary,
+                    syncMode: action.payload,
+                },
+            };
+            break;
+        }
+
+        case "SAVE_SYMBOL": {
+            try {
+                const { objectId, ...saveOptions } = action.payload;
+                const object = state.objects[objectId];
+
+                if (!object) {
+                    newState = state;
+                    break;
+                }
+
+                // Check if we have an active symbol library
+                const activeLibrary = state.symbolLibrary.libraries.find(
+                    (lib) => lib.id === state.symbolLibrary.activeLibraryId
+                );
+
+                if (!activeLibrary) {
+                    // Create a default library if none exists
+                    const defaultLibrary = SymbolLibraryUtils.createDefaultLibrary();
+                    const symbol = SymbolLibraryUtils.createSymbol(object, saveOptions);
+
+                    const updatedLibrary = {
+                        ...defaultLibrary,
+                        symbols: [...defaultLibrary.symbols, symbol],
+                    };
+
+                    newState = {
+                        ...state,
+                        symbolLibrary: {
+                            ...state.symbolLibrary,
+                            libraries: [...state.symbolLibrary.libraries, updatedLibrary],
+                            activeLibraryId: updatedLibrary.id,
+                        },
+                    };
+                } else {
+                    // Add symbol to existing library
+                    const symbol = SymbolLibraryUtils.createSymbol(object, saveOptions);
+
+                    const updatedLibrary = {
+                        ...activeLibrary,
+                        symbols: [...activeLibrary.symbols, symbol],
+                        metadata: {
+                            ...activeLibrary.metadata,
+                            updatedAt: new Date(),
+                        },
+                    };
+
+                    newState = {
+                        ...state,
+                        symbolLibrary: {
+                            ...state.symbolLibrary,
+                            libraries: state.symbolLibrary.libraries.map((lib) =>
+                                lib.id === activeLibrary.id ? updatedLibrary : lib
+                            ),
+                        },
+                    };
+                }
+
+                historyEntry = createHistoryEntry(action, state, `Save symbol "${saveOptions.name}"`);
+            } catch (error) {
+                console.error("Failed to save symbol:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "INSTANTIATE_SYMBOL": {
+            const { symbolId, position = { x: 0, y: 0 }, propertyOverrides = {} } = action.payload;
+
+            try {
+                const activeLibrary = state.symbolLibrary.libraries.find(
+                    (lib) => lib.id === state.symbolLibrary.activeLibraryId
+                );
+                const symbol = activeLibrary?.symbols.find((s) => s.id === symbolId);
+
+                if (!symbol) {
+                    newState = state;
+                    break;
+                }
+
+                const activeLayerId = state.layerSelection.activeLayerId || "default";
+                const instance = SymbolLibraryUtils.createSymbolInstance(
+                    symbol,
+                    position,
+                    activeLayerId,
+                    propertyOverrides
+                );
+
+                // Resolve the symbol instance to get the actual objects
+                const resolvedObject = SymbolLibraryUtils.resolveSymbolInstance(instance, symbol);
+
+                // Add the new instance to the current layer
+                const currentLayer = state.layers[activeLayerId];
+
+                if (!currentLayer) {
+                    newState = state;
+                    break;
+                }
+
+                const updatedLayer = {
+                    ...currentLayer,
+                    objects: [...currentLayer.objects, instance.id],
+                    updatedAt: Date.now(),
+                };
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [instance.id]: instance,
+                    },
+                    layers: {
+                        ...state.layers,
+                        [activeLayerId]: updatedLayer,
+                    },
+                    selection: { objectIds: [instance.id] },
+                };
+
+                historyEntry = createHistoryEntry(action, state, `Instantiate symbol "${symbol.name}"`);
+            } catch (error) {
+                console.error("Failed to instantiate symbol:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_SYMBOL_INSTANCE": {
+            const { id, propertyOverrides } = action.payload;
+            const symbolInstance = state.objects[id];
+
+            if (!symbolInstance || symbolInstance.type !== "symbol") {
+                newState = state;
+                break;
+            }
+
+            try {
+                const updatedInstance = SymbolLibraryUtils.updateSymbolInstance(
+                    symbolInstance as SymbolInstance,
+                    propertyOverrides
+                );
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [id]: updatedInstance,
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, "Update symbol instance properties");
+            } catch (error) {
+                console.error("Failed to update symbol instance:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "SYNC_SYMBOL_INSTANCE": {
+            const { id, forceSync = false } = action.payload;
+            const symbolInstance = state.objects[id];
+
+            if (!symbolInstance || symbolInstance.type !== "symbol") {
+                newState = state;
+                break;
+            }
+
+            try {
+                const activeLibrary = state.symbolLibrary.libraries.find(
+                    (lib) => lib.id === state.symbolLibrary.activeLibraryId
+                );
+                const symbol = activeLibrary?.symbols.find((s) => s.id === (symbolInstance as SymbolInstance).symbolId);
+
+                if (!symbol) {
+                    newState = state;
+                    break;
+                }
+
+                const updatedInstance = SymbolLibraryUtils.syncSymbolInstance(
+                    symbolInstance as SymbolInstance,
+                    symbol,
+                    forceSync
+                );
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [id]: updatedInstance,
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, "Sync symbol instance");
+            } catch (error) {
+                console.error("Failed to sync symbol instance:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "DETACH_SYMBOL_INSTANCE": {
+            const { id } = action.payload;
+            const symbolInstance = state.objects[id];
+
+            if (!symbolInstance || symbolInstance.type !== "symbol") {
+                newState = state;
+                break;
+            }
+
+            try {
+                const detachedInstance = SymbolLibraryUtils.detachSymbolInstance(symbolInstance as SymbolInstance);
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [id]: detachedInstance,
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, "Detach symbol instance");
+            } catch (error) {
+                console.error("Failed to detach symbol instance:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_SYMBOL_MASTER": {
+            const { symbolId, masterObject } = action.payload;
+
+            try {
+                const activeLibrary = state.symbolLibrary.libraries.find(
+                    (lib) => lib.id === state.symbolLibrary.activeLibraryId
+                );
+
+                if (!activeLibrary) {
+                    newState = state;
+                    break;
+                }
+
+                const symbol = activeLibrary.symbols.find((s) => s.id === symbolId);
+
+                if (!symbol) {
+                    newState = state;
+                    break;
+                }
+
+                const updatedSymbol = SymbolLibraryUtils.updateSymbolMaster(symbol, masterObject);
+
+                const updatedLibrary = {
+                    ...activeLibrary,
+                    symbols: activeLibrary.symbols.map((s) => (s.id === symbolId ? updatedSymbol : s)),
+                    metadata: {
+                        ...activeLibrary.metadata,
+                        updatedAt: new Date(),
+                    },
+                };
+
+                newState = {
+                    ...state,
+                    symbolLibrary: {
+                        ...state.symbolLibrary,
+                        libraries: state.symbolLibrary.libraries.map((lib) =>
+                            lib.id === activeLibrary.id ? updatedLibrary : lib
+                        ),
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, "Update symbol master");
+            } catch (error) {
+                console.error("Failed to update symbol master:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        // Animation cases
+        case "CREATE_ANIMATION_TIMELINE": {
+            const { timeline } = action.payload;
+            newState = {
+                ...state,
+                animationTimeline: timeline,
+            };
+            historyEntry = createHistoryEntry(action, state, "Create animation timeline");
+            break;
+        }
+
+        case "UPDATE_ANIMATION_TIMELINE": {
+            const { timeline: updates } = action.payload;
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: {
+                        ...state.animationTimeline,
+                        ...updates,
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, "Update animation timeline");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "DELETE_ANIMATION_TIMELINE": {
+            newState = {
+                ...state,
+                animationTimeline: null,
+                animationPreview: null,
+            };
+            historyEntry = createHistoryEntry(action, state, "Delete animation timeline");
+            break;
+        }
+
+        case "ADD_ANIMATION_TRACK": {
+            const { track } = action.payload;
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: AnimationUtils.addTrackToTimeline(state.animationTimeline, track),
+                };
+                historyEntry = createHistoryEntry(action, state, "Add animation track");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_ANIMATION_TRACK": {
+            const { trackId, track: updates } = action.payload;
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: AnimationUtils.updateTrackInTimeline(state.animationTimeline, trackId, updates),
+                };
+                historyEntry = createHistoryEntry(action, state, "Update animation track");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "DELETE_ANIMATION_TRACK": {
+            const { trackId } = action.payload;
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: AnimationUtils.removeTrackFromTimeline(state.animationTimeline, trackId),
+                };
+                historyEntry = createHistoryEntry(action, state, "Delete animation track");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "ADD_KEYFRAME": {
+            const { trackId, keyframe } = action.payload;
+            if (state.animationTimeline) {
+                const track = state.animationTimeline.tracks.find((t) => t.id === trackId);
+                if (track) {
+                    const updatedTrack = AnimationUtils.addKeyframeToTrack(track, keyframe);
+                    newState = {
+                        ...state,
+                        animationTimeline: AnimationUtils.updateTrackInTimeline(
+                            state.animationTimeline,
+                            trackId,
+                            updatedTrack
+                        ),
+                    };
+                    historyEntry = createHistoryEntry(action, state, "Add keyframe");
+                } else {
+                    newState = state;
+                }
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_KEYFRAME": {
+            const { trackId, keyframeId, keyframe: updates } = action.payload;
+            if (state.animationTimeline) {
+                const track = state.animationTimeline.tracks.find((t) => t.id === trackId);
+                if (track) {
+                    const updatedTrack = AnimationUtils.updateKeyframeInTrack(track, keyframeId, updates);
+                    newState = {
+                        ...state,
+                        animationTimeline: AnimationUtils.updateTrackInTimeline(
+                            state.animationTimeline,
+                            trackId,
+                            updatedTrack
+                        ),
+                    };
+                    historyEntry = createHistoryEntry(action, state, "Update keyframe");
+                } else {
+                    newState = state;
+                }
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "DELETE_KEYFRAME": {
+            const { trackId, keyframeId } = action.payload;
+            if (state.animationTimeline) {
+                const track = state.animationTimeline.tracks.find((t) => t.id === trackId);
+                if (track) {
+                    const updatedTrack = AnimationUtils.removeKeyframeFromTrack(track, keyframeId);
+                    newState = {
+                        ...state,
+                        animationTimeline: AnimationUtils.updateTrackInTimeline(
+                            state.animationTimeline,
+                            trackId,
+                            updatedTrack
+                        ),
+                    };
+                    historyEntry = createHistoryEntry(action, state, "Delete keyframe");
+                } else {
+                    newState = state;
+                }
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "ADD_MOTION_PATH": {
+            const { motionPath } = action.payload;
+            if (state.animationPreview) {
+                newState = {
+                    ...state,
+                    animationPreview: {
+                        ...state.animationPreview,
+                        motionPaths: [...state.animationPreview.motionPaths, motionPath],
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, "Add motion path");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_MOTION_PATH": {
+            const { pathId, motionPath: updates } = action.payload;
+            if (state.animationPreview) {
+                newState = {
+                    ...state,
+                    animationPreview: {
+                        ...state.animationPreview,
+                        motionPaths: state.animationPreview.motionPaths.map((path) =>
+                            path.id === pathId ? { ...path, ...updates } : path
+                        ),
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, "Update motion path");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "DELETE_MOTION_PATH": {
+            const { pathId } = action.payload;
+            if (state.animationPreview) {
+                newState = {
+                    ...state,
+                    animationPreview: {
+                        ...state.animationPreview,
+                        motionPaths: state.animationPreview.motionPaths.filter((path) => path.id !== pathId),
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, "Delete motion path");
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "PLAY_ANIMATION": {
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: {
+                        ...state.animationTimeline,
+                        isPlaying: true,
+                    },
+                };
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "PAUSE_ANIMATION": {
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: {
+                        ...state.animationTimeline,
+                        isPlaying: false,
+                    },
+                };
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "STOP_ANIMATION": {
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: {
+                        ...state.animationTimeline,
+                        isPlaying: false,
+                        currentTime: 0,
+                    },
+                };
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "SEEK_ANIMATION": {
+            const { time } = action.payload;
+            if (state.animationTimeline) {
+                newState = {
+                    ...state,
+                    animationTimeline: {
+                        ...state.animationTimeline,
+                        currentTime: Math.max(0, Math.min(time, state.animationTimeline.duration)),
+                    },
+                };
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "SET_ANIMATION_PREVIEW": {
+            const { preview } = action.payload;
+            newState = {
+                ...state,
+                animationPreview: preview,
+            };
+            break;
+        }
+
+        case "TOGGLE_ANIMATION_PANEL": {
+            const { isOpen } = action.payload;
+            newState = {
+                ...state,
+                isAnimationPanelOpen: isOpen,
+            };
+            break;
+        }
+
         default:
             newState = state;
             break;
@@ -1672,6 +2542,50 @@ interface EditorContextType {
     // Project utilities
     createNewProject: (name?: string) => void;
     generateThumbnail: () => string | undefined;
+
+    // Component Library methods
+    loadComponentLibrary: (library: ComponentLibrary) => void;
+    setActiveComponentLibrary: (libraryId: string) => void;
+    setComponentLibrarySearch: (query: string) => void;
+    setComponentLibraryCategory: (categoryId?: string) => void;
+    toggleComponentLibraryPanel: () => void;
+    saveComponent: (objectIds: string[], options: ComponentSaveOptions) => void;
+    instantiateComponent: (templateId: string, position?: Point, propertyOverrides?: Record<string, any>) => void;
+    updateComponentInstance: (id: string, propertyOverrides: Record<string, any>) => void;
+
+    // Symbol Library methods
+    loadSymbolLibrary: (library: SymbolLibrary) => void;
+    setActiveSymbolLibrary: (libraryId: string) => void;
+    setSymbolLibrarySearch: (query: string) => void;
+    setSymbolLibraryCategory: (categoryId?: string) => void;
+    toggleSymbolLibraryPanel: () => void;
+    setSymbolSyncMode: (mode: "auto" | "manual") => void;
+    saveSymbol: (objectId: string, options: SymbolSaveOptions) => void;
+    instantiateSymbol: (symbolId: string, position?: Point, propertyOverrides?: Record<string, any>) => void;
+    updateSymbolInstance: (id: string, propertyOverrides: Record<string, any>) => void;
+    syncSymbolInstance: (id: string, forceSync?: boolean) => void;
+    detachSymbolInstance: (id: string) => void;
+    updateSymbolMaster: (symbolId: string, masterObject: CanvasObject) => void;
+
+    // Animation methods
+    createAnimationTimeline: (options?: { name?: string; duration?: number; loop?: boolean }) => void;
+    updateAnimationTimeline: (updates: Partial<AnimationTimeline>) => void;
+    deleteAnimationTimeline: () => void;
+    addAnimationTrack: (objectId: string, property: string) => void;
+    updateAnimationTrack: (trackId: string, updates: Partial<AnimationTrack>) => void;
+    deleteAnimationTrack: (trackId: string) => void;
+    addKeyframe: (trackId: string, time: number, properties: Record<string, unknown>) => void;
+    updateKeyframe: (trackId: string, keyframeId: string, updates: Partial<AnimationKeyframe>) => void;
+    deleteKeyframe: (trackId: string, keyframeId: string) => void;
+    addMotionPath: (objectId: string, path: string, duration: number) => void;
+    updateMotionPath: (pathId: string, updates: Partial<MotionPath>) => void;
+    deleteMotionPath: (pathId: string) => void;
+    playAnimation: () => void;
+    pauseAnimation: () => void;
+    stopAnimation: () => void;
+    seekAnimation: (time: number) => void;
+    setAnimationPreview: (preview: AnimationPreview | null) => void;
+    toggleAnimationPanel: (isOpen?: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextType | null>(null);
@@ -1784,6 +2698,166 @@ export function EditorProvider({ children }: EditorProviderProps) {
 
     const importObjects = (objects: CanvasObject[], layers: Layer[]) => {
         dispatch({ type: "IMPORT_OBJECTS", payload: { objects, layers } });
+    };
+
+    // Component Library methods
+    const loadComponentLibrary = (library: ComponentLibrary) => {
+        dispatch({ type: "LOAD_COMPONENT_LIBRARY", payload: library });
+    };
+
+    const setActiveComponentLibrary = (libraryId: string) => {
+        dispatch({ type: "SET_ACTIVE_COMPONENT_LIBRARY", payload: libraryId });
+    };
+
+    const setComponentLibrarySearch = (query: string) => {
+        dispatch({ type: "SET_COMPONENT_LIBRARY_SEARCH", payload: query });
+    };
+
+    const setComponentLibraryCategory = (categoryId?: string) => {
+        dispatch({ type: "SET_COMPONENT_LIBRARY_CATEGORY", payload: categoryId });
+    };
+
+    const toggleComponentLibraryPanel = () => {
+        dispatch({ type: "TOGGLE_COMPONENT_LIBRARY_PANEL" });
+    };
+
+    const saveComponent = (objectIds: string[], options: ComponentSaveOptions) => {
+        dispatch({ type: "SAVE_COMPONENT", payload: { ...options, objectIds } });
+    };
+
+    const instantiateComponent = (templateId: string, position?: Point, propertyOverrides?: Record<string, any>) => {
+        dispatch({ type: "INSTANTIATE_COMPONENT", payload: { templateId, position, propertyOverrides } });
+    };
+
+    const updateComponentInstance = (id: string, propertyOverrides: Record<string, any>) => {
+        dispatch({ type: "UPDATE_COMPONENT_INSTANCE", payload: { id, propertyOverrides } });
+    };
+
+    // Symbol Library methods
+    const loadSymbolLibrary = (library: SymbolLibrary) => {
+        dispatch({ type: "LOAD_SYMBOL_LIBRARY", payload: library });
+    };
+
+    const setActiveSymbolLibrary = (libraryId: string) => {
+        dispatch({ type: "SET_ACTIVE_SYMBOL_LIBRARY", payload: libraryId });
+    };
+
+    const setSymbolLibrarySearch = (query: string) => {
+        dispatch({ type: "SET_SYMBOL_LIBRARY_SEARCH", payload: query });
+    };
+
+    const setSymbolLibraryCategory = (categoryId?: string) => {
+        dispatch({ type: "SET_SYMBOL_LIBRARY_CATEGORY", payload: categoryId });
+    };
+
+    const toggleSymbolLibraryPanel = () => {
+        dispatch({ type: "TOGGLE_SYMBOL_LIBRARY_PANEL" });
+    };
+
+    const setSymbolSyncMode = (mode: "auto" | "manual") => {
+        dispatch({ type: "SET_SYMBOL_SYNC_MODE", payload: mode });
+    };
+
+    const saveSymbol = (objectId: string, options: SymbolSaveOptions) => {
+        dispatch({ type: "SAVE_SYMBOL", payload: { ...options, objectId } });
+    };
+
+    const instantiateSymbol = (symbolId: string, position?: Point, propertyOverrides?: Record<string, any>) => {
+        dispatch({ type: "INSTANTIATE_SYMBOL", payload: { symbolId, position, propertyOverrides } });
+    };
+
+    const updateSymbolInstance = (id: string, propertyOverrides: Record<string, any>) => {
+        dispatch({ type: "UPDATE_SYMBOL_INSTANCE", payload: { id, propertyOverrides } });
+    };
+
+    const syncSymbolInstance = (id: string, forceSync?: boolean) => {
+        dispatch({ type: "SYNC_SYMBOL_INSTANCE", payload: { id, forceSync } });
+    };
+
+    const detachSymbolInstance = (id: string) => {
+        dispatch({ type: "DETACH_SYMBOL_INSTANCE", payload: { id } });
+    };
+
+    const updateSymbolMaster = (symbolId: string, masterObject: CanvasObject) => {
+        dispatch({ type: "UPDATE_SYMBOL_MASTER", payload: { symbolId, masterObject } });
+    };
+
+    // Animation methods
+    const createAnimationTimeline = (options: { name?: string; duration?: number; loop?: boolean } = {}) => {
+        const timeline = AnimationUtils.createTimeline(options);
+        dispatch({ type: "CREATE_ANIMATION_TIMELINE", payload: { timeline } });
+    };
+
+    const updateAnimationTimeline = (updates: Partial<AnimationTimeline>) => {
+        dispatch({ type: "UPDATE_ANIMATION_TIMELINE", payload: { timeline: updates } });
+    };
+
+    const deleteAnimationTimeline = () => {
+        dispatch({ type: "DELETE_ANIMATION_TIMELINE" });
+    };
+
+    const addAnimationTrack = (objectId: string, property: string) => {
+        const track = AnimationUtils.createTrack(objectId, property);
+        dispatch({ type: "ADD_ANIMATION_TRACK", payload: { track } });
+    };
+
+    const updateAnimationTrack = (trackId: string, updates: Partial<AnimationTrack>) => {
+        dispatch({ type: "UPDATE_ANIMATION_TRACK", payload: { trackId, track: updates } });
+    };
+
+    const deleteAnimationTrack = (trackId: string) => {
+        dispatch({ type: "DELETE_ANIMATION_TRACK", payload: { trackId } });
+    };
+
+    const addKeyframe = (trackId: string, time: number, properties: Record<string, unknown>) => {
+        const keyframe = AnimationUtils.createKeyframe(time, properties);
+        dispatch({ type: "ADD_KEYFRAME", payload: { trackId, keyframe } });
+    };
+
+    const updateKeyframe = (trackId: string, keyframeId: string, updates: Partial<AnimationKeyframe>) => {
+        dispatch({ type: "UPDATE_KEYFRAME", payload: { trackId, keyframeId, keyframe: updates } });
+    };
+
+    const deleteKeyframe = (trackId: string, keyframeId: string) => {
+        dispatch({ type: "DELETE_KEYFRAME", payload: { trackId, keyframeId } });
+    };
+
+    const addMotionPath = (objectId: string, path: string, duration: number) => {
+        const motionPath = AnimationUtils.createMotionPath(objectId, path, duration);
+        dispatch({ type: "ADD_MOTION_PATH", payload: { motionPath } });
+    };
+
+    const updateMotionPath = (pathId: string, updates: Partial<MotionPath>) => {
+        dispatch({ type: "UPDATE_MOTION_PATH", payload: { pathId, motionPath: updates } });
+    };
+
+    const deleteMotionPath = (pathId: string) => {
+        dispatch({ type: "DELETE_MOTION_PATH", payload: { pathId } });
+    };
+
+    const playAnimation = () => {
+        dispatch({ type: "PLAY_ANIMATION" });
+    };
+
+    const pauseAnimation = () => {
+        dispatch({ type: "PAUSE_ANIMATION" });
+    };
+
+    const stopAnimation = () => {
+        dispatch({ type: "STOP_ANIMATION" });
+    };
+
+    const seekAnimation = (time: number) => {
+        dispatch({ type: "SEEK_ANIMATION", payload: { time } });
+    };
+
+    const setAnimationPreview = (preview: AnimationPreview | null) => {
+        dispatch({ type: "SET_ANIMATION_PREVIEW", payload: { preview } });
+    };
+
+    const toggleAnimationPanel = (isOpen?: boolean) => {
+        const targetState = isOpen !== undefined ? isOpen : !state.isAnimationPanelOpen;
+        dispatch({ type: "TOGGLE_ANIMATION_PANEL", payload: { isOpen: targetState } });
     };
 
     // Storage methods
@@ -1904,6 +2978,40 @@ export function EditorProvider({ children }: EditorProviderProps) {
         return generateProjectThumbnail(canvasElement);
     };
 
+    // Load default library if none exist
+    useEffect(() => {
+        if (state.componentLibrary.libraries.length === 0) {
+            try {
+                const storedLibraries = ComponentLibraryUtils.loadFromStorage();
+                if (storedLibraries.length > 0) {
+                    storedLibraries.forEach((library) => {
+                        dispatch({ type: "LOAD_COMPONENT_LIBRARY", payload: library });
+                    });
+                } else {
+                    // Create default library if none stored
+                    const defaultLibrary = ComponentLibraryUtils.createDefaultLibrary();
+                    dispatch({ type: "LOAD_COMPONENT_LIBRARY", payload: defaultLibrary });
+                }
+            } catch (error) {
+                console.error("Failed to load component libraries from storage:", error);
+                // Fallback to creating default library
+                const defaultLibrary = ComponentLibraryUtils.createDefaultLibrary();
+                dispatch({ type: "LOAD_COMPONENT_LIBRARY", payload: defaultLibrary });
+            }
+        }
+    }, [state.componentLibrary.libraries.length]);
+
+    // Auto-save component libraries whenever they change
+    useEffect(() => {
+        if (state.componentLibrary.libraries.length > 0) {
+            try {
+                ComponentLibraryUtils.saveToStorage(state.componentLibrary.libraries);
+            } catch (error) {
+                console.error("Failed to save component libraries to storage:", error);
+            }
+        }
+    }, [state.componentLibrary.libraries]);
+
     // Initialize auto-save on mount and handle settings changes
     useEffect(() => {
         if (state.autoSave.settings.enabled && !state.autoSave.intervalId) {
@@ -1990,6 +3098,48 @@ export function EditorProvider({ children }: EditorProviderProps) {
         createNewProject,
         generateThumbnail,
         importObjects,
+        loadComponentLibrary,
+        setActiveComponentLibrary,
+        setComponentLibrarySearch,
+        setComponentLibraryCategory,
+        toggleComponentLibraryPanel,
+        saveComponent,
+        instantiateComponent,
+        updateComponentInstance,
+
+        // Symbol Library methods
+        loadSymbolLibrary,
+        setActiveSymbolLibrary,
+        setSymbolLibrarySearch,
+        setSymbolLibraryCategory,
+        toggleSymbolLibraryPanel,
+        setSymbolSyncMode,
+        saveSymbol,
+        instantiateSymbol,
+        updateSymbolInstance,
+        syncSymbolInstance,
+        detachSymbolInstance,
+        updateSymbolMaster,
+
+        // Animation methods
+        createAnimationTimeline,
+        updateAnimationTimeline,
+        deleteAnimationTimeline,
+        addAnimationTrack,
+        updateAnimationTrack,
+        deleteAnimationTrack,
+        addKeyframe,
+        updateKeyframe,
+        deleteKeyframe,
+        addMotionPath,
+        updateMotionPath,
+        deleteMotionPath,
+        playAnimation,
+        pauseAnimation,
+        stopAnimation,
+        seekAnimation,
+        setAnimationPreview,
+        toggleAnimationPanel,
     };
 
     return <EditorContext.Provider value={contextValue}>{children}</EditorContext.Provider>;

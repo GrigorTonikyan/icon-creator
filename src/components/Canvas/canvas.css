@@ -10,6 +10,24 @@
 
 .canvas-svg {
     display: block;
+    /* Progressive rendering styles */
+    .canvas-object--placeholder {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .canvas-object--simplified {
+        /* Simplified objects have reduced visual complexity */
+        transition: none; /* Remove transitions for performance */
+    }
+
+    .canvas-object--simplified.canvas-object--selected {
+        /* Maintain selection visibility even in simplified mode */
+        stroke: #007acc;
+        stroke-width: 2;
+    }
+}
+.canvas {
     cursor: crosshair;
     user-select: none;
 }
@@ -44,13 +62,18 @@
     filter: drop-shadow(0 2px 8px rgba(0, 123, 255, 0.3));
 }
 
+.canvas-object--simplified {
+    stroke: none !important;
+    stroke-width: 0 !important;
+}
+
 .canvas-object--creating {
     opacity: 0.7;
     stroke-dasharray: 4 4;
-    animation: creating-pulse 1s ease-in-out infinite alternate;
+    animation: creatingPulse 1s ease-in-out infinite alternate;
 }
 
-@keyframes creating-pulse {
+@keyframes creatingPulse {
     from {
         opacity: 0.5;
     }
@@ -183,6 +206,43 @@
     font-family: monospace;
     pointer-events: none;
     z-index: 10;
+}
+
+.canvas-performance-metrics {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    pointer-events: none;
+    line-height: 1.4;
+    z-index: 10;
+}
+
+.performance-mode-indicator {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+/* Progressive rendering styles */
+.canvas-object--placeholder {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.canvas-object--simplified {
+    /* Simplified objects have reduced visual complexity */
+    transition: none; /* Remove transitions for performance */
+}
+
+.canvas-object--simplified.canvas-object--selected {
+    /* Maintain selection visibility even in simplified mode */
+    stroke: #007acc;
+    stroke-width: 2;
 }
 
 /* Responsive */

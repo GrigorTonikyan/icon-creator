@@ -1,0 +1,320 @@
+/* Accessibility Provider Styles */
+
+.AccessibilityProvider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute !important;
+    left: -10000px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(1px, 1px, 1px, 1px) !important;
+    white-space: nowrap !important;
+}
+
+/* High contrast mode styles */
+.high-contrast,
+[data-theme="high-contrast"] {
+    /* Override all colors for high contrast */
+    --color-background: #000000;
+    --color-foreground: #ffffff;
+    --color-primary: #ffff00;
+    --color-secondary: #00ffff;
+    --color-accent: #ff00ff;
+    --color-border: #ffffff;
+    --color-disabled: #808080;
+    --color-error: #ff0000;
+    --color-success: #00ff00;
+    --color-warning: #ffff00;
+
+    /* Text colors */
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #ffff00;
+    --color-text-disabled: #808080;
+
+    /* Button colors */
+    --color-button-background: #000000;
+    --color-button-foreground: #ffffff;
+    --color-button-border: #ffffff;
+    --color-button-hover-background: #333333;
+    --color-button-active-background: #666666;
+
+    /* Input colors */
+    --color-input-background: #000000;
+    --color-input-foreground: #ffffff;
+    --color-input-border: #ffffff;
+    --color-input-focus-border: #ffff00;
+
+    /* Selection colors */
+    --color-selection-background: #0000ff;
+    --color-selection-foreground: #ffffff;
+    --color-selection-border: #ffff00;
+
+    /* Canvas colors */
+    --color-canvas-background: #000000;
+    --color-canvas-grid: #333333;
+    --color-canvas-guides: #ffff00;
+
+    /* Apply high contrast colors */
+    background-color: var(--color-background) !important;
+    color: var(--color-foreground) !important;
+}
+
+.high-contrast * {
+    /* Ensure all elements inherit high contrast colors */
+    background-color: inherit;
+    color: inherit;
+    border-color: var(--color-border) !important;
+}
+
+.high-contrast button {
+    background-color: var(--color-button-background) !important;
+    color: var(--color-button-foreground) !important;
+    border: 2px solid var(--color-button-border) !important;
+
+    &:hover {
+        background-color: var(--color-button-hover-background) !important;
+    }
+
+    &:active,
+    &.active {
+        background-color: var(--color-button-active-background) !important;
+    }
+
+    &:disabled {
+        background-color: var(--color-disabled) !important;
+        color: var(--color-text-disabled) !important;
+        border-color: var(--color-disabled) !important;
+    }
+}
+
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+    background-color: var(--color-input-background) !important;
+    color: var(--color-input-foreground) !important;
+    border: 2px solid var(--color-input-border) !important;
+
+    &:focus {
+        border-color: var(--color-input-focus-border) !important;
+        outline: 2px solid var(--color-input-focus-border) !important;
+        outline-offset: 2px;
+    }
+}
+
+.high-contrast a {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+
+    &:hover {
+        color: var(--color-secondary) !important;
+    }
+
+    &:visited {
+        color: var(--color-accent) !important;
+    }
+}
+
+/* Focus indicators for better visibility */
+.high-contrast *:focus {
+    outline: 3px solid var(--color-primary) !important;
+    outline-offset: 2px;
+}
+
+/* Selection indicators */
+.high-contrast .selection-box {
+    stroke: var(--color-selection-border) !important;
+    stroke-width: 3px !important;
+}
+
+.high-contrast .selection-handle {
+    fill: var(--color-selection-background) !important;
+    stroke: var(--color-selection-border) !important;
+    stroke-width: 2px !important;
+}
+
+/* Grid and guides */
+.high-contrast .grid-line {
+    stroke: var(--color-canvas-grid) !important;
+    stroke-width: 1px !important;
+}
+
+.high-contrast .smart-guide,
+.high-contrast .manual-guide {
+    stroke: var(--color-canvas-guides) !important;
+    stroke-width: 2px !important;
+}
+
+/* Toolbar and panels */
+.high-contrast .toolbar,
+.high-contrast .panel {
+    background-color: var(--color-background) !important;
+    border: 2px solid var(--color-border) !important;
+}
+
+/* Icons and SVG elements */
+.high-contrast svg {
+    fill: var(--color-foreground) !important;
+    stroke: var(--color-foreground) !important;
+}
+
+/* Specific accessibility enhancements */
+.accessibility-enhanced {
+    /* Larger click targets */
+    min-width: 44px;
+    min-height: 44px;
+
+    /* Better spacing for readability */
+    margin: 4px;
+    padding: 8px;
+
+    /* Clear focus indication */
+    &:focus {
+        outline: 2px solid var(--color-primary, #007acc);
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .AccessibilityProvider * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Keyboard navigation indicators */
+.keyboard-navigation-active {
+    /* Show focus outlines when navigating with keyboard */
+
+    *:focus {
+        outline: 2px solid var(--color-primary, #007acc);
+        outline-offset: 2px;
+    }
+
+    button:focus {
+        box-shadow: 0 0 0 2px var(--color-primary, #007acc);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+        border-color: var(--color-primary, #007acc);
+        box-shadow: 0 0 0 1px var(--color-primary, #007acc);
+    }
+}
+
+/* Skip links for screen readers */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background-color: var(--color-primary, #007acc);
+    color: var(--color-background, #ffffff);
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 10000;
+    font-weight: bold;
+
+    &:focus {
+        top: 0;
+    }
+}
+
+/* Accessible tooltips */
+.accessible-tooltip {
+    position: relative;
+
+    &:hover::after,
+    &:focus::after {
+        content: attr(aria-label);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--color-background, #333333);
+        color: var(--color-foreground, #ffffff);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        white-space: nowrap;
+        z-index: 1000;
+        border: 1px solid var(--color-border, #666666);
+    }
+}
+
+/* Error and status announcements */
+.accessibility-announcement {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+
+    &[aria-live="assertive"] {
+        /* Ensure urgent announcements are heard */
+        z-index: 10001;
+    }
+}
+
+/* Loading states for screen readers */
+.accessibility-loading {
+    &::before {
+        content: "Loading...";
+        position: absolute;
+        left: -10000px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+    }
+
+    &[aria-busy="true"] {
+        &::before {
+            content: "Loading, please wait...";
+        }
+    }
+}
+
+/* Progress indicators */
+.accessibility-progress {
+    &[role="progressbar"] {
+        background-color: var(--color-background, #f0f0f0);
+        border: 1px solid var(--color-border, #cccccc);
+
+        &::after {
+            content: attr(aria-valuenow) "% complete";
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+    }
+}
+
+/* Form validation states */
+.accessibility-invalid {
+    border-color: var(--color-error, #ff0000) !important;
+
+    &:focus {
+        outline-color: var(--color-error, #ff0000) !important;
+        box-shadow: 0 0 0 1px var(--color-error, #ff0000) !important;
+    }
+}
+
+.accessibility-valid {
+    border-color: var(--color-success, #00ff00) !important;
+
+    &:focus {
+        outline-color: var(--color-success, #00ff00) !important;
+        box-shadow: 0 0 0 1px var(--color-success, #00ff00) !important;
+    }
+}

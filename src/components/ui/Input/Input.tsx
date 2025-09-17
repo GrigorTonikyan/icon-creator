@@ -2,7 +2,7 @@ import cn from "classnames";
 import type { InputHTMLAttributes } from "react";
 import "./Input.css";
 
-export type InputVariant = "text" | "color" | "range";
+export type InputVariant = "text" | "color" | "range" | "file";
 
 export interface BaseInputProps {
     variant?: InputVariant;
@@ -10,6 +10,7 @@ export interface BaseInputProps {
     error?: string;
     label?: string;
     id?: string;
+    suffix?: string;
 }
 
 export interface TextInputProps extends BaseInputProps, Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -27,9 +28,14 @@ export interface RangeInputProps extends BaseInputProps, Omit<InputHTMLAttribute
     max?: number;
     step?: number;
     showValue?: boolean;
+    suffix?: string;
 }
 
-export type InputProps = TextInputProps | ColorInputProps | RangeInputProps;
+export interface FileInputProps extends BaseInputProps, Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+    variant: "file";
+}
+
+export type InputProps = TextInputProps | ColorInputProps | RangeInputProps | FileInputProps;
 
 export function Input(props: InputProps) {
     const { variant = "text", className, error, label, id, ...inputProps } = props;
@@ -88,9 +94,19 @@ export function Input(props: InputProps) {
                         {showValue && (
                             <span className="Input__range-value" aria-hidden="true">
                                 {formatValue(rangeProps.value)}
+                                {rangeProps.suffix || ""}
                             </span>
                         )}
                     </div>
+                );
+            case "file":
+                return (
+                    <input
+                        {...(inputProps as FileInputProps)}
+                        type="file"
+                        {...baseProps}
+                        aria-label={label || "File upload"}
+                    />
                 );
             default:
                 const textProps = props as TextInputProps;
