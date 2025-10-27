@@ -1,0 +1,327 @@
+/* ============================================================================
+   User Presence Styles - Stage 12 Step 6
+   ============================================================================ */
+
+/* User Cursor */
+.UserCursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10000;
+    transition: opacity 0.3s ease;
+}
+
+.UserCursor.active {
+    opacity: 1;
+}
+
+.UserCursor:not(.active) {
+    opacity: 0.5;
+}
+
+.UserCursor__label {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    background: currentColor;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.UserCursor__label::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid currentColor;
+}
+
+/* User Selection */
+.UserSelection {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.UserSelection__indicator {
+    position: absolute;
+    border: 2px solid;
+    border-radius: 4px;
+    background: transparent;
+    animation: selectionPulse 2s infinite;
+}
+
+.UserSelection__label {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    background: currentColor;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+@keyframes selectionPulse {
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.4;
+        transform: scale(1.02);
+    }
+}
+
+/* User Presence List */
+.UserPresenceList {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.UserPresenceList__header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.UserPresenceList__count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.UserPresenceList__users {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.UserPresenceList__user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.UserPresenceList__user:hover {
+    background: var(--color-surface-hover);
+}
+
+.UserPresenceList__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.UserPresenceList__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.UserPresenceList__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.UserPresenceList__name {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.UserPresenceList__role {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    text-transform: capitalize;
+}
+
+.UserPresenceList__tool {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    font-style: italic;
+}
+
+.UserPresenceList__status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-text-disabled);
+    transition: background-color 0.2s ease;
+}
+
+.UserPresenceList__status[data-active="true"] {
+    background: var(--color-success);
+    box-shadow: 0 0 4px var(--color-success);
+}
+
+/* Collaboration Status */
+.CollaborationStatus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.CollaborationStatus.disconnected {
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+}
+
+.CollaborationStatus.connecting {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning);
+}
+
+.CollaborationStatus.connected {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
+}
+
+.CollaborationStatus.error {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+    border: 1px solid var(--color-error);
+}
+
+.CollaborationStatus__icon {
+    font-size: 10px;
+    line-height: 1;
+}
+
+.CollaborationStatus__text {
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.CollaborationStatus.connecting .CollaborationStatus__icon {
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Presence Overlay */
+.PresenceOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .UserCursor__label,
+[data-theme="dark"] .UserSelection__label {
+    background: currentColor;
+    color: white;
+}
+
+[data-theme="dark"] .UserPresenceList {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .UserPresenceList__user:hover {
+    background: var(--color-surface-hover-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .UserPresenceList {
+        min-width: 180px;
+        max-width: 250px;
+        padding: 10px;
+    }
+
+    .UserPresenceList__avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .UserCursor__label,
+    .UserSelection__label {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .UserCursor,
+    .UserSelection__indicator {
+        filter: contrast(1.5);
+    }
+
+    .UserPresenceList {
+        border-width: 2px;
+    }
+
+    .CollaborationStatus {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .UserCursor,
+    .UserSelection__indicator,
+    .CollaborationStatus {
+        transition: none;
+    }
+
+    .UserSelection__indicator {
+        animation: none;
+    }
+
+    .CollaborationStatus.connecting .CollaborationStatus__icon {
+        animation: none;
+    }
+}

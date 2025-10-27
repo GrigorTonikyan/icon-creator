@@ -3,6 +3,7 @@ export * from "./accessibility";
 export * from "./alignmentUtils";
 export * from "./analytics";
 export * from "./animationUtils";
+export * from "./collaborationUtils";
 export * from "./componentLibraryUtils";
 export * from "./symbolLibraryUtils";
 export * from "./dateUtils";

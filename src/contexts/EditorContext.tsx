@@ -13,6 +13,7 @@ import {
     type ComponentSaveOptions,
     type ComponentTemplate,
     type CoordinateDisplay,
+    type CustomShapeObject,
     type EditorAction,
     type EditorState,
     type HistoryEntry,
@@ -35,12 +36,26 @@ import {
     type ToolType,
     type UnitType,
     type ViewportState,
+    // Collaborative Types - Stage 12 Step 6
+    type CollaborationState,
+    type CollaborationSession,
+    type User,
+    type UserPresence,
+    type ChangeOperation,
+    type ConflictResolution,
+    type VersionControl,
+    // Plugin System Types - Stage 12 Step 7
+    type Plugin,
+    type PluginError,
+    type ExtensionPoint,
 } from "../types/editor";
 import { calculateNewOrder } from "../utils/layerUtils";
 import { createEmptyProject, deserializeProject, generateProjectThumbnail, serializeProject } from "../utils/project";
 import { AnimationUtils } from "../utils/animationUtils";
 import { ComponentLibraryUtils } from "../utils/componentLibraryUtils";
 import { SymbolLibraryUtils } from "../utils/symbolLibraryUtils";
+// Collaborative Utilities - Stage 12 Step 6
+import { CollaborationUtils, ConflictResolver, OperationalTransformation } from "../utils/collaborationUtils";
 import {
     alignLeft,
     alignRight,
@@ -172,6 +187,59 @@ const initialEditorState: EditorState = {
     animationTimeline: null,
     animationPreview: null,
     isAnimationPanelOpen: false,
+
+    // Collaborative Editing - Stage 12 Step 6
+    collaboration: {
+        isEnabled: false,
+        isConnected: false,
+        isHost: false,
+        connectionStatus: "disconnected",
+        lastSync: 0,
+        pendingOperations: [],
+        operationHistory: [],
+        conflicts: [],
+        presenceIndicators: true,
+        showCursors: true,
+        showSelections: true,
+    },
+
+    // Plugin System - Stage 12 Step 7
+    plugins: {
+        plugins: {},
+        extensionPoints: {},
+        isInitialized: false,
+        loadingPlugins: [],
+        errors: [],
+        lastUpdate: Date.now(),
+    },
+
+    // Plugin Manager reference for context integration
+    pluginManager: {
+        plugins: {},
+        extensionPoints: {},
+        isInitialized: false,
+        loadingPlugins: [],
+        errors: [],
+        lastUpdate: Date.now(),
+    },
+
+    // Custom Shape Extensions - Stage 12 Step 9
+    shapeLibrary: {
+        generators: {},
+        activeGenerator: undefined,
+        parameterValues: {},
+        previewMode: false,
+        lastUsed: [],
+        favorites: [],
+        categories: [],
+    },
+
+    // Custom Tools State
+    customTools: {
+        tools: {},
+        activeTool: undefined,
+        toolParameters: {},
+    },
 };
 
 // History Utilities
@@ -1557,6 +1625,243 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
             }
         }
 
+        // Advanced Path Operations - Stage 12 Step 8
+        case "PERFORM_BOOLEAN_OPERATION": {
+            const { operation, pathIds } = action.payload;
+
+            // Validate inputs
+            if (pathIds.length < 2) return state;
+
+            const pathObjects = pathIds
+                .map((id) => state.objects[id])
+                .filter(
+                    (obj): obj is import("../types/editor").PathObject => obj?.type === "path"
+                ) as import("../types/editor").PathObject[];
+
+            if (pathObjects.length < 2) return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.performBooleanOperation(operation, pathObjects);
+
+                if (!result.success || !result.result) {
+                    console.error("Boolean operation failed:", result.error);
+                    return state;
+                }
+
+                const newPath = result.result;
+                const newObjects = { ...state.objects };
+
+                // Remove original paths and add new result
+                pathIds.forEach((id) => delete newObjects[id]);
+                newObjects[newPath.id] = newPath;
+
+                // Update layers
+                const newLayers = { ...state.layers };
+                const targetLayerId = pathObjects[0]?.layerId || "default";
+                const layer = newLayers[targetLayerId];
+
+                if (layer) {
+                    newLayers[targetLayerId] = {
+                        ...layer,
+                        objects: layer.objects.filter((id) => !pathIds.includes(id)).concat(newPath.id),
+                    };
+                }
+
+                return {
+                    ...state,
+                    objects: newObjects,
+                    layers: newLayers,
+                    selection: { objectIds: [newPath.id] },
+                };
+            } catch (error) {
+                console.error("Boolean operation failed:", error);
+                return state;
+            }
+        }
+
+        case "SIMPLIFY_PATH": {
+            const { pathId, options } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.simplifyPath(pathObject as import("../types/editor").PathObject, options);
+
+                if (!result.success || !result.result) {
+                    console.error("Path simplification failed:", result.error);
+                    return state;
+                }
+
+                return {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [pathId]: result.result,
+                    },
+                };
+            } catch (error) {
+                console.error("Path simplification failed:", error);
+                return state;
+            }
+        }
+
+        case "SMOOTH_PATH": {
+            const { pathId, options } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.smoothPath(pathObject as import("../types/editor").PathObject, options);
+
+                if (!result.success || !result.result) {
+                    console.error("Path smoothing failed:", result.error);
+                    return state;
+                }
+
+                return {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [pathId]: result.result,
+                    },
+                };
+            } catch (error) {
+                console.error("Path smoothing failed:", error);
+                return state;
+            }
+        }
+
+        case "OFFSET_PATH": {
+            const { pathId, offset, options } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.offsetPath(
+                    pathObject as import("../types/editor").PathObject,
+                    offset,
+                    options
+                );
+
+                if (!result.success || !result.result) {
+                    console.error("Path offset failed:", result.error);
+                    return state;
+                }
+
+                // Add as new object (offset creates a new path)
+                const newPath = result.result;
+                const newObjects = { ...state.objects };
+                newObjects[newPath.id] = newPath;
+
+                // Update layer
+                const newLayers = { ...state.layers };
+                const pathObj = pathObject as import("../types/editor").PathObject;
+                const targetLayerId = pathObj.layerId || "default";
+                const layer = newLayers[targetLayerId];
+
+                if (layer) {
+                    newLayers[targetLayerId] = {
+                        ...layer,
+                        objects: [...layer.objects, newPath.id],
+                    };
+                }
+
+                return {
+                    ...state,
+                    objects: newObjects,
+                    layers: newLayers,
+                    selection: { objectIds: [newPath.id] },
+                };
+            } catch (error) {
+                console.error("Path offset failed:", error);
+                return state;
+            }
+        }
+
+        case "REVERSE_PATH": {
+            const { pathId } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.reversePath(pathObject as import("../types/editor").PathObject);
+
+                if (!result.success || !result.result) {
+                    console.error("Path reversal failed:", result.error);
+                    return state;
+                }
+
+                return {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [pathId]: result.result,
+                    },
+                };
+            } catch (error) {
+                console.error("Path reversal failed:", error);
+                return state;
+            }
+        }
+
+        case "CONVERT_PATH_TO_ABSOLUTE": {
+            const { pathId } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.convertToAbsolute(pathObject as import("../types/editor").PathObject);
+
+                if (!result.success || !result.result) {
+                    console.error("Path conversion failed:", result.error);
+                    return state;
+                }
+
+                return {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [pathId]: result.result,
+                    },
+                };
+            } catch (error) {
+                console.error("Path conversion failed:", error);
+                return state;
+            }
+        }
+
+        case "ANALYZE_PATH": {
+            // This is more for information/debugging - doesn't modify state
+            const { pathId } = action.payload;
+            const pathObject = state.objects[pathId];
+
+            if (!pathObject || pathObject.type !== "path") return state;
+
+            try {
+                const { pathOperations } = require("../utils/PathOperations");
+                const result = pathOperations.analyzePath(pathObject as import("../types/editor").PathObject);
+
+                if (result.success && result.analysis) {
+                    console.log("Path Analysis:", result.analysis);
+                }
+            } catch (error) {
+                console.error("Path analysis failed:", error);
+            }
+
+            return state;
+        }
+
         case "UPDATE_AUTO_SAVE_SETTINGS": {
             const settings = action.payload;
             newState = {
@@ -2416,6 +2721,628 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
             break;
         }
 
+        // ===============================================
+        // Collaborative Editing Actions - Stage 12 Step 6
+        // ===============================================
+
+        case "ENABLE_COLLABORATION": {
+            const { session, user } = action.payload;
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    isEnabled: true,
+                    isConnected: true,
+                    isHost: session.ownerId === user.id,
+                    currentUser: user,
+                    session,
+                    connectionStatus: "connected",
+                    lastSync: Date.now(),
+                },
+            };
+            break;
+        }
+
+        case "DISABLE_COLLABORATION": {
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    isEnabled: false,
+                    isConnected: false,
+                    isHost: false,
+                    currentUser: undefined,
+                    session: undefined,
+                    connectionStatus: "disconnected",
+                    pendingOperations: [],
+                    operationHistory: [],
+                    conflicts: [],
+                },
+            };
+            break;
+        }
+
+        case "UPDATE_COLLABORATION_STATE": {
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    ...action.payload,
+                },
+            };
+            break;
+        }
+
+        case "ADD_USER": {
+            const { user } = action.payload;
+            if (!state.collaboration.session) {
+                newState = state;
+                break;
+            }
+
+            const updatedUsers = [...state.collaboration.session.users];
+            const existingIndex = updatedUsers.findIndex((u) => u.id === user.id);
+
+            if (existingIndex >= 0) {
+                updatedUsers[existingIndex] = user;
+            } else {
+                updatedUsers.push(user);
+            }
+
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    session: {
+                        ...state.collaboration.session,
+                        users: updatedUsers,
+                    },
+                },
+            };
+            break;
+        }
+
+        case "REMOVE_USER": {
+            const { userId } = action.payload;
+            if (!state.collaboration.session) {
+                newState = state;
+                break;
+            }
+
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    session: {
+                        ...state.collaboration.session,
+                        users: state.collaboration.session.users.filter((u) => u.id !== userId),
+                        activePresence: state.collaboration.session.activePresence.filter((p) => p.userId !== userId),
+                    },
+                },
+            };
+            break;
+        }
+
+        case "UPDATE_USER_PRESENCE": {
+            const { presence } = action.payload;
+            if (!state.collaboration.session) {
+                newState = state;
+                break;
+            }
+
+            const updatedPresence = [...state.collaboration.session.activePresence];
+            const existingIndex = updatedPresence.findIndex((p) => p.userId === presence.userId);
+
+            if (existingIndex >= 0) {
+                updatedPresence[existingIndex] = presence;
+            } else {
+                updatedPresence.push(presence);
+            }
+
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    session: {
+                        ...state.collaboration.session,
+                        activePresence: updatedPresence,
+                    },
+                },
+            };
+            break;
+        }
+
+        case "REMOVE_USER_PRESENCE": {
+            const { userId } = action.payload;
+            if (!state.collaboration.session) {
+                newState = state;
+                break;
+            }
+
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    session: {
+                        ...state.collaboration.session,
+                        activePresence: state.collaboration.session.activePresence.filter((p) => p.userId !== userId),
+                    },
+                },
+            };
+            break;
+        }
+
+        case "ADD_OPERATION": {
+            const { operation } = action.payload;
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    pendingOperations: [...state.collaboration.pendingOperations, operation],
+                    operationHistory: [...state.collaboration.operationHistory, operation],
+                },
+            };
+            break;
+        }
+
+        case "APPLY_OPERATION": {
+            const { operation } = action.payload;
+            // Apply the operation to the state
+            // This would typically be handled by the operation transformation logic
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    pendingOperations: state.collaboration.pendingOperations.filter((op) => op.id !== operation.id),
+                    lastSync: Date.now(),
+                },
+            };
+            break;
+        }
+
+        case "RESOLVE_CONFLICT": {
+            const { resolution } = action.payload;
+            const updatedConflicts = state.collaboration.conflicts.map((conflict) =>
+                conflict.id === resolution.id ? resolution : conflict
+            );
+
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    conflicts: updatedConflicts,
+                },
+            };
+            break;
+        }
+
+        case "UPDATE_CONNECTION_STATUS": {
+            const { status, error } = action.payload;
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    connectionStatus: status,
+                    isConnected: status === "connected",
+                    error,
+                },
+            };
+            break;
+        }
+
+        case "SYNC_STATE": {
+            const { operations, version } = action.payload;
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    operationHistory: [...state.collaboration.operationHistory, ...operations],
+                    lastSync: Date.now(),
+                },
+            };
+            break;
+        }
+
+        case "CREATE_VERSION": {
+            const { version } = action.payload;
+            // Version creation is typically handled by the version manager
+            // This action would trigger version creation and storage
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    lastSync: Date.now(),
+                },
+            };
+            break;
+        }
+
+        case "ROLLBACK_TO_VERSION": {
+            const { version } = action.payload;
+            // Version rollback would restore state from a specific version
+            // This would require integration with the version manager
+            newState = {
+                ...state,
+                collaboration: {
+                    ...state.collaboration,
+                    lastSync: Date.now(),
+                },
+            };
+            break;
+        }
+
+        // Plugin management actions
+        case "LOAD_PLUGIN": {
+            const { plugin } = action.payload;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    plugins: {
+                        ...state.plugins.plugins,
+                        [plugin.manifest.id]: plugin,
+                    },
+                },
+            };
+            historyEntry = createHistoryEntry(action, state, `Load plugin: ${plugin.manifest.name}`);
+            break;
+        }
+
+        case "UNLOAD_PLUGIN": {
+            const { pluginId } = action.payload;
+            const { [pluginId]: removedPlugin, ...remainingPlugins } = state.plugins.plugins;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    plugins: remainingPlugins,
+                    lastUpdate: Date.now(),
+                },
+            };
+            historyEntry = createHistoryEntry(action, state, `Unload plugin: ${pluginId}`);
+            break;
+        }
+
+        case "ENABLE_PLUGIN": {
+            const { pluginId } = action.payload;
+            const plugin = state.plugins.plugins[pluginId];
+            if (plugin) {
+                newState = {
+                    ...state,
+                    plugins: {
+                        ...state.plugins,
+                        plugins: {
+                            ...state.plugins.plugins,
+                            [pluginId]: {
+                                ...plugin,
+                                isEnabled: true,
+                                enabledAt: Date.now(),
+                            },
+                        },
+                        lastUpdate: Date.now(),
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, `Enable plugin: ${plugin.manifest.name}`);
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "DISABLE_PLUGIN": {
+            const { pluginId } = action.payload;
+            const plugin = state.plugins.plugins[pluginId];
+            if (plugin) {
+                const { enabledAt, ...pluginWithoutEnabledAt } = plugin;
+                newState = {
+                    ...state,
+                    plugins: {
+                        ...state.plugins,
+                        plugins: {
+                            ...state.plugins.plugins,
+                            [pluginId]: {
+                                ...pluginWithoutEnabledAt,
+                                isEnabled: false,
+                            },
+                        },
+                        lastUpdate: Date.now(),
+                    },
+                };
+                historyEntry = createHistoryEntry(action, state, `Disable plugin: ${plugin.manifest.name}`);
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "UPDATE_PLUGIN_STATE": {
+            const { pluginId, state: pluginState } = action.payload;
+            const plugin = state.plugins.plugins[pluginId];
+            if (plugin) {
+                newState = {
+                    ...state,
+                    plugins: {
+                        ...state.plugins,
+                        plugins: {
+                            ...state.plugins.plugins,
+                            [pluginId]: {
+                                ...plugin,
+                                state: { ...plugin.state, ...pluginState },
+                            },
+                        },
+                        lastUpdate: Date.now(),
+                    },
+                };
+                // No history entry for state updates as they're internal
+            } else {
+                newState = state;
+            }
+            break;
+        }
+
+        case "REGISTER_EXTENSION_POINT": {
+            const { extensionPoint } = action.payload;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    extensionPoints: {
+                        ...state.plugins.extensionPoints,
+                        [extensionPoint.id]: extensionPoint,
+                    },
+                    lastUpdate: Date.now(),
+                },
+            };
+            historyEntry = createHistoryEntry(action, state, `Register extension point: ${extensionPoint.name}`);
+            break;
+        }
+
+        case "UNREGISTER_EXTENSION_POINT": {
+            const { extensionPointId } = action.payload;
+            const { [extensionPointId]: removedExtensionPoint, ...remainingExtensionPoints } =
+                state.plugins.extensionPoints;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    extensionPoints: remainingExtensionPoints,
+                    lastUpdate: Date.now(),
+                },
+            };
+            historyEntry = createHistoryEntry(action, state, `Unregister extension point: ${extensionPointId}`);
+            break;
+        }
+
+        case "ADD_PLUGIN_ERROR": {
+            const { error } = action.payload;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    errors: [...state.plugins.errors, error],
+                    lastUpdate: Date.now(),
+                },
+            };
+            // No history entry for errors
+            break;
+        }
+
+        case "CLEAR_PLUGIN_ERRORS": {
+            const { pluginId } = action.payload;
+            newState = {
+                ...state,
+                plugins: {
+                    ...state.plugins,
+                    errors: pluginId ? state.plugins.errors.filter((error) => error.pluginId !== pluginId) : [],
+                    lastUpdate: Date.now(),
+                },
+            };
+            // No history entry for error clearing
+            break;
+        }
+
+        case "EXECUTE_PLUGIN_ACTION": {
+            const { pluginId, actionId, params, result } = action.payload;
+            // Plugin action execution is handled by the PluginManager
+            // This case exists for potential state updates or logging
+            newState = state;
+            historyEntry = createHistoryEntry(action, state, `Execute plugin action: ${pluginId}:${actionId}`);
+            break;
+        }
+
+        // Custom Shape Extension Actions - Stage 12 Step 9
+        case "REGISTER_SHAPE_GENERATOR": {
+            const { generator } = action.payload;
+            newState = {
+                ...state,
+                shapeLibrary: {
+                    ...state.shapeLibrary,
+                    generators: {
+                        ...state.shapeLibrary.generators,
+                        [generator.config.id]: generator,
+                    },
+                },
+            };
+            // No history entry for generator registration
+            break;
+        }
+
+        case "UNREGISTER_SHAPE_GENERATOR": {
+            const { generatorId } = action.payload;
+            const newGenerators = { ...state.shapeLibrary.generators };
+            delete newGenerators[generatorId];
+
+            newState = {
+                ...state,
+                shapeLibrary: {
+                    ...state.shapeLibrary,
+                    generators: newGenerators,
+                    activeGenerator:
+                        state.shapeLibrary.activeGenerator === generatorId
+                            ? undefined
+                            : state.shapeLibrary.activeGenerator,
+                    favorites: state.shapeLibrary.favorites.filter((id) => id !== generatorId),
+                },
+            };
+            // No history entry for generator unregistration
+            break;
+        }
+
+        case "SET_ACTIVE_SHAPE_GENERATOR": {
+            const { generatorId } = action.payload;
+            newState = {
+                ...state,
+                shapeLibrary: {
+                    ...state.shapeLibrary,
+                    activeGenerator: generatorId,
+                },
+            };
+            // No history entry for generator selection
+            break;
+        }
+
+        case "UPDATE_SHAPE_PARAMETERS": {
+            const { generatorId, parameters } = action.payload;
+            newState = {
+                ...state,
+                shapeLibrary: {
+                    ...state.shapeLibrary,
+                    parameterValues: {
+                        ...state.shapeLibrary.parameterValues,
+                        [generatorId]: {
+                            ...state.shapeLibrary.parameterValues[generatorId],
+                            ...parameters,
+                        },
+                    },
+                },
+            };
+            // No history entry for parameter updates
+            break;
+        }
+
+        case "GENERATE_CUSTOM_SHAPE": {
+            const { generatorId, parameters, position = { x: 0, y: 0 } } = action.payload;
+            const generator = state.shapeLibrary.generators[generatorId];
+
+            if (!generator) {
+                newState = state;
+                break;
+            }
+
+            try {
+                // Generate the shape using the generator
+                const result = generator.generate(parameters);
+
+                if (!result.success || !result.shape) {
+                    console.error("Shape generation failed:", result.error);
+                    newState = state;
+                    break;
+                }
+
+                // Create a new custom shape object
+                const newObject: CustomShapeObject = {
+                    id: `shape-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    type: "custom-shape",
+                    name: `${generator.config.name} Shape`,
+                    transform: {
+                        x: position.x,
+                        y: position.y,
+                        rotation: 0,
+                        scaleX: 1,
+                        scaleY: 1,
+                    },
+                    generatorId,
+                    parameters: { ...parameters },
+                    pathData: result.shape.pathData,
+                    style: result.shape.style || {
+                        fill: "#3b82f6",
+                        stroke: "none",
+                        strokeWidth: 1,
+                    },
+                    lastGenerated: Date.now(),
+                    version: generator.config.version,
+                    opacity: 1,
+                    visible: true,
+                    locked: false,
+                    zIndex: 0,
+                    layerId: "default",
+                };
+
+                // Add to objects and update usage tracking
+                const updatedLastUsed = [
+                    generatorId,
+                    ...state.shapeLibrary.lastUsed.filter((id) => id !== generatorId),
+                ].slice(0, 10); // Keep only last 10
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [newObject.id]: newObject,
+                    },
+                    shapeLibrary: {
+                        ...state.shapeLibrary,
+                        lastUsed: updatedLastUsed,
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, `Generate ${generator.config.name}`);
+            } catch (error) {
+                console.error("Error generating custom shape:", error);
+                newState = state;
+            }
+            break;
+        }
+
+        case "REGENERATE_CUSTOM_SHAPE": {
+            const { objectId } = action.payload;
+            const object = state.objects[objectId] as CustomShapeObject;
+
+            if (!object || object.type !== "custom-shape") {
+                newState = state;
+                break;
+            }
+
+            const generator = state.shapeLibrary.generators[object.generatorId];
+            if (!generator) {
+                console.error("Generator not found:", object.generatorId);
+                newState = state;
+                break;
+            }
+
+            try {
+                const result = generator.generate(object.parameters);
+
+                if (!result.success || !result.shape) {
+                    console.error("Shape regeneration failed:", result.error);
+                    newState = state;
+                    break;
+                }
+
+                const updatedObject: CustomShapeObject = {
+                    ...object,
+                    pathData: result.shape.pathData,
+                    style: result.shape.style || object.style,
+                    lastGenerated: Date.now(),
+                    version: generator.config.version,
+                };
+
+                newState = {
+                    ...state,
+                    objects: {
+                        ...state.objects,
+                        [objectId]: updatedObject,
+                    },
+                };
+
+                historyEntry = createHistoryEntry(action, state, `Regenerate ${generator.config.name}`);
+            } catch (error) {
+                console.error("Error regenerating custom shape:", error);
+                newState = state;
+            }
+            break;
+        }
+
         default:
             newState = state;
             break;
@@ -2510,6 +3437,25 @@ interface EditorContextType {
     // Path operations
     performPathOperation: (operation: PathOperationType, pathIds: string[]) => void;
 
+    // Advanced Path Operations - Stage 12 Step 8
+    performBooleanOperation: (operation: PathOperationType, pathIds: string[]) => void;
+    simplifyPath: (
+        pathId: string,
+        options?: { tolerance?: number; preserveCorners?: boolean; optimize?: boolean; precision?: number }
+    ) => void;
+    smoothPath: (
+        pathId: string,
+        options?: { smoothingFactor?: number; preserveEnds?: boolean; optimize?: boolean }
+    ) => void;
+    offsetPath: (
+        pathId: string,
+        offset: number,
+        options?: { joinType?: "miter" | "round" | "bevel"; optimize?: boolean }
+    ) => void;
+    reversePath: (pathId: string) => void;
+    convertPathToAbsolute: (pathId: string) => void;
+    analyzePath: (pathId: string) => void;
+
     // History methods
     undo: () => void;
     redo: () => void;
@@ -2586,6 +3532,42 @@ interface EditorContextType {
     seekAnimation: (time: number) => void;
     setAnimationPreview: (preview: AnimationPreview | null) => void;
     toggleAnimationPanel: (isOpen?: boolean) => void;
+
+    // Collaboration methods
+    enableCollaboration: (sessionId: string, userName: string) => void;
+    disableCollaboration: () => void;
+    addUser: (user: User) => void;
+    removeUser: (userId: string) => void;
+    updateUserPresence: (userId: string, presence: UserPresence) => void;
+    addOperation: (operation: ChangeOperation) => void;
+    resolveConflict: (conflictId: string, resolution: ConflictResolution) => void;
+    createVersionSnapshot: () => string;
+    restoreVersion: (versionId: string) => void;
+    setVersionControlEnabled: (enabled: boolean) => void;
+    applyRemoteOperation: (operation: ChangeOperation) => void;
+    setUserCursor: (userId: string, cursor: Point) => void;
+    setUserSelection: (userId: string, selection: string[]) => void;
+    clearUserPresence: (userId: string) => void;
+
+    // Plugin System methods - Stage 12 Step 7
+    loadPlugin: (plugin: Plugin) => void;
+    unloadPlugin: (pluginId: string) => void;
+    enablePlugin: (pluginId: string) => void;
+    disablePlugin: (pluginId: string) => void;
+    updatePluginState: (pluginId: string, state: any) => void;
+    addPluginError: (error: PluginError) => void;
+    clearPluginErrors: (pluginId?: string) => void;
+    registerExtensionPoint: (extensionPoint: ExtensionPoint) => void;
+    unregisterExtensionPoint: (extensionPointId: string) => void;
+    executePluginAction: (pluginId: string, actionId: string, params?: any) => void;
+
+    // Custom Shape Extension methods - Stage 12 Step 9
+    registerShapeGenerator: (generator: any) => void;
+    unregisterShapeGenerator: (generatorId: string) => void;
+    setActiveShapeGenerator: (generatorId: string) => void;
+    updateShapeParameters: (generatorId: string, parameters: Record<string, any>) => void;
+    generateCustomShape: (generatorId: string, parameters: Record<string, any>, position?: Point) => void;
+    regenerateCustomShape: (objectId: string) => void;
 }
 
 const EditorContext = createContext<EditorContextType | null>(null);
@@ -2679,6 +3661,45 @@ export function EditorProvider({ children }: EditorProviderProps) {
 
     const performPathOperation = (operation: PathOperationType, pathIds: string[]) => {
         dispatch({ type: "PATH_OPERATION", payload: { type: operation, pathIds } });
+    };
+
+    // Advanced Path Operations - Stage 12 Step 8
+    const performBooleanOperation = (operation: PathOperationType, pathIds: string[]) => {
+        dispatch({ type: "PERFORM_BOOLEAN_OPERATION", payload: { operation, pathIds } });
+    };
+
+    const simplifyPath = (
+        pathId: string,
+        options?: { tolerance?: number; preserveCorners?: boolean; optimize?: boolean; precision?: number }
+    ) => {
+        dispatch({ type: "SIMPLIFY_PATH", payload: { pathId, options } });
+    };
+
+    const smoothPath = (
+        pathId: string,
+        options?: { smoothingFactor?: number; preserveEnds?: boolean; optimize?: boolean }
+    ) => {
+        dispatch({ type: "SMOOTH_PATH", payload: { pathId, options } });
+    };
+
+    const offsetPath = (
+        pathId: string,
+        offset: number,
+        options?: { joinType?: "miter" | "round" | "bevel"; optimize?: boolean }
+    ) => {
+        dispatch({ type: "OFFSET_PATH", payload: { pathId, offset, options } });
+    };
+
+    const reversePath = (pathId: string) => {
+        dispatch({ type: "REVERSE_PATH", payload: { pathId } });
+    };
+
+    const convertPathToAbsolute = (pathId: string) => {
+        dispatch({ type: "CONVERT_PATH_TO_ABSOLUTE", payload: { pathId } });
+    };
+
+    const analyzePath = (pathId: string) => {
+        dispatch({ type: "ANALYZE_PATH", payload: { pathId } });
     };
 
     // History methods
@@ -3075,6 +4096,14 @@ export function EditorProvider({ children }: EditorProviderProps) {
         alignObjects,
         distributeObjects,
         performPathOperation,
+        // Advanced Path Operations - Stage 12 Step 8
+        performBooleanOperation,
+        simplifyPath,
+        smoothPath,
+        offsetPath,
+        reversePath,
+        convertPathToAbsolute,
+        analyzePath,
         undo,
         redo,
         clearHistory,
@@ -3140,6 +4169,187 @@ export function EditorProvider({ children }: EditorProviderProps) {
         seekAnimation,
         setAnimationPreview,
         toggleAnimationPanel,
+
+        // Collaboration methods - Stage 12 Step 6
+        enableCollaboration: (sessionId: string, userName: string) => {
+            // Create a temporary session and user for collaboration
+            const user: User = {
+                id: `user_${Date.now()}`,
+                name: userName,
+                color: "#0066cc",
+                role: "editor",
+                isOnline: true,
+                lastSeen: Date.now(),
+            };
+            const session: CollaborationSession = {
+                id: sessionId,
+                projectId: sessionId, // Use sessionId as project identifier
+                ownerId: user.id,
+                name: `${userName}'s Session`,
+                isPublic: false,
+                maxUsers: 10,
+                users: [user],
+                activePresence: [],
+                createdAt: Date.now(),
+                lastActivity: Date.now(),
+                settings: {
+                    allowAnonymous: false,
+                    requireApproval: false,
+                    enableVoiceChat: false,
+                    enableTextChat: true,
+                    autoSaveInterval: 30,
+                    conflictResolution: "manual",
+                    presenceTimeout: 30000,
+                    operationTimeout: 5000,
+                },
+            };
+            dispatch({ type: "ENABLE_COLLABORATION", payload: { session, user } });
+        },
+        disableCollaboration: () => {
+            dispatch({ type: "DISABLE_COLLABORATION" });
+        },
+        addUser: (user: User) => {
+            dispatch({ type: "ADD_USER", payload: { user } });
+        },
+        removeUser: (userId: string) => {
+            dispatch({ type: "REMOVE_USER", payload: { userId } });
+        },
+        updateUserPresence: (userId: string, presence: UserPresence) => {
+            dispatch({ type: "UPDATE_USER_PRESENCE", payload: { presence } });
+        },
+        addOperation: (operation: ChangeOperation) => {
+            dispatch({ type: "ADD_OPERATION", payload: { operation } });
+        },
+        resolveConflict: (conflictId: string, resolution: ConflictResolution) => {
+            dispatch({ type: "RESOLVE_CONFLICT", payload: { resolution } });
+        },
+        createVersionSnapshot: (): string => {
+            const versionControl: VersionControl = {
+                version: `v${Date.now()}`,
+                timestamp: Date.now(),
+                authorId: state.collaboration.currentUser?.id || "unknown",
+                message: "Snapshot created",
+                operations: [],
+                isSnapshot: true,
+            };
+            dispatch({ type: "CREATE_VERSION", payload: { version: versionControl } });
+            return versionControl.version;
+        },
+        restoreVersion: (versionId: string) => {
+            const versionControl: VersionControl = {
+                version: versionId,
+                timestamp: Date.now(),
+                authorId: state.collaboration.currentUser?.id || "unknown",
+                message: "Version restored",
+                operations: [],
+                isSnapshot: false,
+            };
+            dispatch({ type: "CREATE_VERSION", payload: { version: versionControl } });
+        },
+        setVersionControlEnabled: (enabled: boolean) => {
+            const versionControl: VersionControl = {
+                version: enabled ? "enabled" : "disabled",
+                timestamp: Date.now(),
+                authorId: state.collaboration.currentUser?.id || "unknown",
+                message: enabled ? "Version control enabled" : "Version control disabled",
+                operations: [],
+                isSnapshot: false,
+            };
+            dispatch({ type: "CREATE_VERSION", payload: { version: versionControl } });
+        },
+        applyRemoteOperation: (operation: ChangeOperation) => {
+            dispatch({ type: "APPLY_OPERATION", payload: { operation } });
+        },
+        setUserCursor: (userId: string, cursor: Point) => {
+            const presence: UserPresence = {
+                userId,
+                sessionId: state.collaboration.session?.id || "",
+                cursor,
+                selection: [],
+                lastActivity: Date.now(),
+                isActive: true,
+            };
+            dispatch({ type: "UPDATE_USER_PRESENCE", payload: { presence } });
+        },
+        setUserSelection: (userId: string, selection: string[]) => {
+            const presence: UserPresence = {
+                userId,
+                sessionId: state.collaboration.session?.id || "",
+                selection,
+                lastActivity: Date.now(),
+                isActive: true,
+            };
+            dispatch({ type: "UPDATE_USER_PRESENCE", payload: { presence } });
+        },
+        clearUserPresence: (userId: string) => {
+            dispatch({ type: "REMOVE_USER", payload: { userId } });
+        },
+
+        // Plugin System methods - Stage 12 Step 7
+        loadPlugin: (plugin: Plugin) => {
+            dispatch({ type: "LOAD_PLUGIN", payload: { plugin } });
+        },
+
+        unloadPlugin: (pluginId: string) => {
+            dispatch({ type: "UNLOAD_PLUGIN", payload: { pluginId } });
+        },
+
+        enablePlugin: (pluginId: string) => {
+            dispatch({ type: "ENABLE_PLUGIN", payload: { pluginId } });
+        },
+
+        disablePlugin: (pluginId: string) => {
+            dispatch({ type: "DISABLE_PLUGIN", payload: { pluginId } });
+        },
+
+        updatePluginState: (pluginId: string, state: any) => {
+            dispatch({ type: "UPDATE_PLUGIN_STATE", payload: { pluginId, state } });
+        },
+
+        addPluginError: (error: PluginError) => {
+            dispatch({ type: "ADD_PLUGIN_ERROR", payload: { error } });
+        },
+
+        clearPluginErrors: (pluginId?: string) => {
+            dispatch({ type: "CLEAR_PLUGIN_ERRORS", payload: { pluginId } });
+        },
+
+        registerExtensionPoint: (extensionPoint: ExtensionPoint) => {
+            dispatch({ type: "REGISTER_EXTENSION_POINT", payload: { extensionPoint } });
+        },
+
+        unregisterExtensionPoint: (extensionPointId: string) => {
+            dispatch({ type: "UNREGISTER_EXTENSION_POINT", payload: { extensionPointId } });
+        },
+
+        executePluginAction: (pluginId: string, actionId: string, params?: any) => {
+            dispatch({ type: "EXECUTE_PLUGIN_ACTION", payload: { pluginId, actionId, params } });
+        },
+
+        // Custom Shape Extension methods - Stage 12 Step 9
+        registerShapeGenerator: (generator: any) => {
+            dispatch({ type: "REGISTER_SHAPE_GENERATOR", payload: { generator } });
+        },
+
+        unregisterShapeGenerator: (generatorId: string) => {
+            dispatch({ type: "UNREGISTER_SHAPE_GENERATOR", payload: { generatorId } });
+        },
+
+        setActiveShapeGenerator: (generatorId: string) => {
+            dispatch({ type: "SET_ACTIVE_SHAPE_GENERATOR", payload: { generatorId } });
+        },
+
+        updateShapeParameters: (generatorId: string, parameters: Record<string, any>) => {
+            dispatch({ type: "UPDATE_SHAPE_PARAMETERS", payload: { generatorId, parameters } });
+        },
+
+        generateCustomShape: (generatorId: string, parameters: Record<string, any>, position?: Point) => {
+            dispatch({ type: "GENERATE_CUSTOM_SHAPE", payload: { generatorId, parameters, position } });
+        },
+
+        regenerateCustomShape: (objectId: string) => {
+            dispatch({ type: "REGENERATE_CUSTOM_SHAPE", payload: { objectId } });
+        },
     };
 
     return <EditorContext.Provider value={contextValue}>{children}</EditorContext.Provider>;

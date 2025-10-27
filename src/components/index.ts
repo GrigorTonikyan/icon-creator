@@ -6,8 +6,10 @@ export { AnalyticsSettings } from "./AnalyticsSettings";
 export { AnimationPanel } from "./AnimationPanel";
 export { AutoSaveSettingsPanel } from "./AutoSaveSettingsPanel";
 export { Canvas } from "./Canvas";
+export { CollaborationPanel } from "./CollaborationPanel";
 export { ComponentLibrary } from "./ComponentLibrary";
 export { ComponentLibraryPanel } from "./ComponentLibraryPanel";
+export { ConflictResolutionDialog, ConflictIndicator, ConflictList } from "./ConflictResolution";
 export { ConfigPanel } from "./ConfigPanel/configPanel";
 export { CrashRecoveryDialog } from "./CrashRecoveryDialog";
 export { ErrorBoundary } from "./ErrorBoundary";
@@ -26,6 +28,8 @@ export { ManualGuides } from "./ManualGuides";
 export { MeasurementIndicator } from "./MeasurementIndicator";
 export { MigrationTool } from "./MigrationTool";
 export { NavBar as Header } from "./NavBar/navBar";
+export { PathOperationsPanel } from "./PathOperationsPanel";
+export { PluginPanel } from "./PluginPanel";
 export { PrecisionInputs } from "./PrecisionInputs";
 export { PropertyPanel } from "./PropertyPanel";
 export { RulerControls } from "./RulerControls";
@@ -34,6 +38,7 @@ export { SnapSettings } from "./SnapSettings";
 export { ThemeSettings } from "./ThemeSettings";
 export { Toolbar } from "./Toolbar";
 export { TourGuide } from "./TourGuide/TourGuide";
+export { UserCursor, UserSelection, UserPresenceList, CollaborationStatus, PresenceOverlay } from "./UserPresence";
 export { VerticalRuler } from "./VerticalRuler";
 
 // UI Components

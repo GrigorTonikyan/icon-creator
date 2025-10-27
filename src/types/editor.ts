@@ -35,7 +35,15 @@ export interface BaseCanvasObject {
 }
 
 // Object Types
-export type CanvasObjectType = "rectangle" | "circle" | "text" | "path" | "group" | "component" | "symbol";
+export type CanvasObjectType =
+    | "rectangle"
+    | "circle"
+    | "text"
+    | "path"
+    | "group"
+    | "component"
+    | "symbol"
+    | "custom-shape";
 
 // Gradient and Pattern Types
 export interface LinearGradient {
@@ -217,6 +225,111 @@ export interface GroupObject extends BaseCanvasObject {
     children: string[]; // Array of child object IDs
 }
 
+// Custom Shape Extension System
+export interface ShapeParameter {
+    id: string;
+    name: string;
+    type: "number" | "color" | "boolean" | "select" | "range";
+    value: any;
+    min?: number;
+    max?: number;
+    step?: number;
+    options?: string[]; // For select type
+    description?: string;
+    category?: string;
+}
+
+export interface ShapeGeneratorConfig {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    icon?: string;
+    parameters: ShapeParameter[];
+    presets?: ShapePreset[];
+    version: string;
+    author?: string;
+    tags?: string[];
+}
+
+export interface ShapePreset {
+    id: string;
+    name: string;
+    description?: string;
+    parameters: Record<string, any>;
+    thumbnail?: string;
+}
+
+export interface GeneratedShape {
+    pathData: string;
+    style?: ShapeStyle;
+    metadata?: Record<string, any>;
+}
+
+export interface ShapeGeneratorResult {
+    success: boolean;
+    shape?: GeneratedShape;
+    error?: string;
+    warnings?: string[];
+}
+
+export interface ShapeGenerator {
+    config: ShapeGeneratorConfig;
+    generate: (parameters: Record<string, any>) => ShapeGeneratorResult;
+    validateParameters?: (parameters: Record<string, any>) => string[];
+    getPreview?: (parameters: Record<string, any>) => string; // SVG preview
+}
+
+export interface CustomShapeObject extends BaseCanvasObject {
+    type: "custom-shape";
+    generatorId: string;
+    parameters: Record<string, any>;
+    pathData: string; // Generated path data
+    style: ShapeStyle;
+    lastGenerated: number; // Timestamp of last generation
+    version: string; // Generator version used
+}
+
+export interface ShapeLibraryState {
+    generators: Record<string, ShapeGenerator>;
+    activeGenerator?: string;
+    parameterValues: Record<string, Record<string, any>>; // generatorId -> parameters
+    previewMode: boolean;
+    lastUsed: string[]; // Array of generator IDs in usage order
+    favorites: string[]; // Array of favorite generator IDs
+    categories: string[];
+}
+
+// Tool Extension System for Custom Shapes
+export interface CustomToolConfig {
+    id: string;
+    name: string;
+    description: string;
+    icon?: string;
+    category: "shape" | "utility" | "modifier";
+    keyboardShortcut?: string;
+    cursor?: string;
+    parameters?: ShapeParameter[];
+}
+
+export interface CustomTool {
+    config: CustomToolConfig;
+    onActivate?: () => void;
+    onDeactivate?: () => void;
+    onCanvasMouseDown?: (event: MouseEvent, point: Point) => void;
+    onCanvasMouseMove?: (event: MouseEvent, point: Point) => void;
+    onCanvasMouseUp?: (event: MouseEvent, point: Point) => void;
+    onCanvasKeyDown?: (event: KeyboardEvent) => void;
+    onCanvasKeyUp?: (event: KeyboardEvent) => void;
+    render?: (context: CanvasRenderingContext2D) => void;
+}
+
+export interface CustomToolState {
+    tools: Record<string, CustomTool>;
+    activeTool?: string;
+    toolParameters: Record<string, Record<string, any>>; // toolId -> parameters
+}
+
 // Union type for all canvas objects
 export type CanvasObject =
     | RectangleObject
@@ -225,7 +338,8 @@ export type CanvasObject =
     | PathObject
     | GroupObject
     | ComponentInstance
-    | SymbolInstance;
+    | SymbolInstance
+    | CustomShapeObject;
 
 // Layer System
 export interface Layer {
@@ -436,6 +550,17 @@ export interface EditorState {
     animationTimeline: AnimationTimeline | null;
     animationPreview: AnimationPreview | null;
     isAnimationPanelOpen: boolean;
+
+    // Collaborative Editing - Stage 12 Step 6
+    collaboration: CollaborationState;
+
+    // Plugin System - Stage 12 Step 7
+    plugins: PluginManagerState;
+    pluginManager: PluginManagerState;
+
+    // Custom Shape Extensions - Stage 12 Step 9
+    shapeLibrary: ShapeLibraryState;
+    customTools: CustomToolState;
 }
 
 // History System Types
@@ -567,6 +692,33 @@ export type EditorAction =
           };
       }
     | { type: "PATH_OPERATION"; payload: PathOperation }
+    // Advanced Path Operations - Stage 12 Step 8
+    | { type: "PERFORM_BOOLEAN_OPERATION"; payload: { operation: PathOperationType; pathIds: string[] } }
+    | {
+          type: "SIMPLIFY_PATH";
+          payload: {
+              pathId: string;
+              options?: { tolerance?: number; preserveCorners?: boolean; optimize?: boolean; precision?: number };
+          };
+      }
+    | {
+          type: "SMOOTH_PATH";
+          payload: {
+              pathId: string;
+              options?: { smoothingFactor?: number; preserveEnds?: boolean; optimize?: boolean };
+          };
+      }
+    | {
+          type: "OFFSET_PATH";
+          payload: {
+              pathId: string;
+              offset: number;
+              options?: { joinType?: "miter" | "round" | "bevel"; optimize?: boolean };
+          };
+      }
+    | { type: "REVERSE_PATH"; payload: { pathId: string } }
+    | { type: "CONVERT_PATH_TO_ABSOLUTE"; payload: { pathId: string } }
+    | { type: "ANALYZE_PATH"; payload: { pathId: string } }
     | { type: "IMPORT_OBJECTS"; payload: { objects: CanvasObject[]; layers: Layer[] } }
     | { type: "UNDO" }
     | { type: "REDO" }
@@ -624,7 +776,57 @@ export type EditorAction =
     | { type: "STOP_ANIMATION" }
     | { type: "SEEK_ANIMATION"; payload: { time: number } }
     | { type: "SET_ANIMATION_PREVIEW"; payload: { preview: AnimationPreview | null } }
-    | { type: "TOGGLE_ANIMATION_PANEL"; payload: { isOpen: boolean } };
+    | { type: "TOGGLE_ANIMATION_PANEL"; payload: { isOpen: boolean } }
+
+    // Collaborative Editing Actions - Stage 12 Step 6
+    | { type: "ENABLE_COLLABORATION"; payload: { session: CollaborationSession; user: User } }
+    | { type: "DISABLE_COLLABORATION" }
+    | { type: "UPDATE_COLLABORATION_STATE"; payload: Partial<CollaborationState> }
+    | { type: "ADD_USER"; payload: { user: User } }
+    | { type: "REMOVE_USER"; payload: { userId: string } }
+    | { type: "UPDATE_USER_PRESENCE"; payload: { presence: UserPresence } }
+    | { type: "REMOVE_USER_PRESENCE"; payload: { userId: string } }
+    | { type: "ADD_OPERATION"; payload: { operation: ChangeOperation } }
+    | { type: "APPLY_OPERATION"; payload: { operation: ChangeOperation } }
+    | { type: "RESOLVE_CONFLICT"; payload: { resolution: ConflictResolution } }
+    | { type: "UPDATE_CONNECTION_STATUS"; payload: { status: CollaborationState["connectionStatus"]; error?: string } }
+    | { type: "SYNC_STATE"; payload: { operations: ChangeOperation[]; version: string } }
+    | { type: "CREATE_VERSION"; payload: { version: VersionControl } }
+    | { type: "ROLLBACK_TO_VERSION"; payload: { version: string } }
+    // Plugin System Actions - Stage 12 Step 7
+    | { type: "LOAD_PLUGIN"; payload: { plugin: Plugin } }
+    | { type: "UNLOAD_PLUGIN"; payload: { pluginId: string } }
+    | { type: "ENABLE_PLUGIN"; payload: { pluginId: string } }
+    | { type: "DISABLE_PLUGIN"; payload: { pluginId: string } }
+    | { type: "UPDATE_PLUGIN_STATE"; payload: { pluginId: string; state: any } }
+    | { type: "ADD_PLUGIN_ERROR"; payload: { error: PluginError } }
+    | { type: "CLEAR_PLUGIN_ERRORS"; payload: { pluginId?: string } }
+    | { type: "REGISTER_EXTENSION_POINT"; payload: { extensionPoint: ExtensionPoint } }
+    | { type: "UNREGISTER_EXTENSION_POINT"; payload: { extensionPointId: string } }
+    | { type: "EXECUTE_PLUGIN_ACTION"; payload: { pluginId: string; actionId: string; params?: any; result?: any } }
+
+    // Custom Shape Extension Actions - Stage 12 Step 9
+    | { type: "REGISTER_SHAPE_GENERATOR"; payload: { generator: ShapeGenerator } }
+    | { type: "UNREGISTER_SHAPE_GENERATOR"; payload: { generatorId: string } }
+    | { type: "SET_ACTIVE_SHAPE_GENERATOR"; payload: { generatorId: string } }
+    | { type: "UPDATE_SHAPE_PARAMETERS"; payload: { generatorId: string; parameters: Record<string, any> } }
+    | {
+          type: "GENERATE_CUSTOM_SHAPE";
+          payload: { generatorId: string; parameters: Record<string, any>; position?: Point };
+      }
+    | { type: "REGENERATE_CUSTOM_SHAPE"; payload: { objectId: string; parameters?: Record<string, any> } }
+    | { type: "APPLY_SHAPE_PRESET"; payload: { generatorId: string; presetId: string } }
+    | { type: "SAVE_SHAPE_PRESET"; payload: { generatorId: string; preset: ShapePreset } }
+    | { type: "DELETE_SHAPE_PRESET"; payload: { generatorId: string; presetId: string } }
+    | { type: "ADD_FAVORITE_SHAPE_GENERATOR"; payload: { generatorId: string } }
+    | { type: "REMOVE_FAVORITE_SHAPE_GENERATOR"; payload: { generatorId: string } }
+    | { type: "SET_SHAPE_LIBRARY_PREVIEW_MODE"; payload: { enabled: boolean } }
+
+    // Custom Tool Extension Actions
+    | { type: "REGISTER_CUSTOM_TOOL"; payload: { tool: CustomTool } }
+    | { type: "UNREGISTER_CUSTOM_TOOL"; payload: { toolId: string } }
+    | { type: "SET_ACTIVE_CUSTOM_TOOL"; payload: { toolId: string } }
+    | { type: "UPDATE_CUSTOM_TOOL_PARAMETERS"; payload: { toolId: string; parameters: Record<string, any> } };
 
 // History action descriptions for UI display
 export const ACTION_DESCRIPTIONS: Record<string, string> = {
@@ -641,6 +843,14 @@ export const ACTION_DESCRIPTIONS: Record<string, string> = {
     DUPLICATE_LAYERS: "Duplicate layers",
     MOVE_LAYERS: "Move layers",
     PATH_OPERATION: "Path operation",
+    // Advanced Path Operations - Stage 12 Step 8
+    PERFORM_BOOLEAN_OPERATION: "Boolean path operation",
+    SIMPLIFY_PATH: "Simplify path",
+    SMOOTH_PATH: "Smooth path",
+    OFFSET_PATH: "Offset path",
+    REVERSE_PATH: "Reverse path direction",
+    CONVERT_PATH_TO_ABSOLUTE: "Convert path to absolute",
+    ANALYZE_PATH: "Analyze path",
     SET_TOOL: "Change tool",
     SELECT_OBJECTS: "Select objects",
     CLEAR_SELECTION: "Clear selection",
@@ -698,6 +908,51 @@ export const ACTION_DESCRIPTIONS: Record<string, string> = {
     SEEK_ANIMATION: "Seek animation",
     SET_ANIMATION_PREVIEW: "Set animation preview",
     TOGGLE_ANIMATION_PANEL: "Toggle animation panel",
+
+    // Collaborative Editing Descriptions - Stage 12 Step 6
+    ENABLE_COLLABORATION: "Enable collaboration",
+    DISABLE_COLLABORATION: "Disable collaboration",
+    UPDATE_COLLABORATION_STATE: "Update collaboration state",
+    ADD_USER: "Add user to session",
+    REMOVE_USER: "Remove user from session",
+    UPDATE_USER_PRESENCE: "Update user presence",
+    REMOVE_USER_PRESENCE: "Remove user presence",
+    ADD_OPERATION: "Add collaborative operation",
+    APPLY_OPERATION: "Apply collaborative operation",
+    RESOLVE_CONFLICT: "Resolve conflict",
+    UPDATE_CONNECTION_STATUS: "Update connection status",
+    SYNC_STATE: "Sync collaborative state",
+    CREATE_VERSION: "Create version",
+    ROLLBACK_TO_VERSION: "Rollback to version",
+    // Plugin actions
+    LOAD_PLUGIN: "Load plugin",
+    UNLOAD_PLUGIN: "Unload plugin",
+    ENABLE_PLUGIN: "Enable plugin",
+    DISABLE_PLUGIN: "Disable plugin",
+
+    // Custom Shape Extension Descriptions - Stage 12 Step 9
+    REGISTER_SHAPE_GENERATOR: "Register shape generator",
+    UNREGISTER_SHAPE_GENERATOR: "Unregister shape generator",
+    SET_ACTIVE_SHAPE_GENERATOR: "Set active shape generator",
+    UPDATE_SHAPE_PARAMETERS: "Update shape parameters",
+    GENERATE_CUSTOM_SHAPE: "Generate custom shape",
+    REGENERATE_CUSTOM_SHAPE: "Regenerate custom shape",
+    APPLY_SHAPE_PRESET: "Apply shape preset",
+    SAVE_SHAPE_PRESET: "Save shape preset",
+    DELETE_SHAPE_PRESET: "Delete shape preset",
+    ADD_FAVORITE_SHAPE_GENERATOR: "Add favorite shape generator",
+    REMOVE_FAVORITE_SHAPE_GENERATOR: "Remove favorite shape generator",
+    SET_SHAPE_LIBRARY_PREVIEW_MODE: "Set shape library preview mode",
+
+    // Custom Tool Extension Descriptions
+    REGISTER_CUSTOM_TOOL: "Register custom tool",
+    UNREGISTER_CUSTOM_TOOL: "Unregister custom tool",
+    SET_ACTIVE_CUSTOM_TOOL: "Set active custom tool",
+    UPDATE_CUSTOM_TOOL_PARAMETERS: "Update custom tool parameters",
+    UPDATE_PLUGIN_STATE: "Update plugin state",
+    REGISTER_EXTENSION_POINT: "Register extension point",
+    UNREGISTER_EXTENSION_POINT: "Unregister extension point",
+    EXECUTE_PLUGIN_ACTION: "Execute plugin action",
 };
 
 // Event Types
@@ -1123,4 +1378,443 @@ export interface AnimationExportOptions {
     fps?: number;
     dimensions?: { width: number; height: number };
     includeMotionPaths?: boolean;
+}
+
+// ============================================================================
+// Collaborative Editing Types - Stage 12 Step 6
+// ============================================================================
+
+export interface User {
+    id: string;
+    name: string;
+    email?: string;
+    avatar?: string;
+    color: string; // Hex color for cursor and presence indicators
+    role: "owner" | "editor" | "viewer";
+    isOnline: boolean;
+    lastSeen: number; // Timestamp
+}
+
+export interface UserPresence {
+    userId: string;
+    sessionId: string;
+    cursor?: Point;
+    selection: string[]; // Array of selected object IDs
+    tool?: CanvasObjectType | "select" | "pan" | "zoom";
+    viewport?: ViewportState;
+    lastActivity: number; // Timestamp
+    isActive: boolean;
+}
+
+export interface ChangeOperation {
+    id: string;
+    type: "create" | "update" | "delete" | "move" | "transform" | "style";
+    timestamp: number;
+    userId: string;
+    sessionId: string;
+    objectId?: string;
+    layerId?: string;
+    path?: string; // Property path for granular updates (e.g., "style.fill", "transform.x")
+    beforeValue?: any;
+    afterValue?: any;
+    metadata?: Record<string, any>;
+    dependencies?: string[]; // IDs of operations this depends on
+}
+
+export interface ConflictResolution {
+    id: string;
+    timestamp: number;
+    conflictingOperations: ChangeOperation[];
+    resolutionStrategy: "last-write-wins" | "manual" | "auto-merge" | "rollback";
+    resolvedOperation?: ChangeOperation;
+    resolvedBy?: string; // User ID
+    isResolved: boolean;
+}
+
+export interface CollaborationSession {
+    id: string;
+    projectId: string;
+    ownerId: string;
+    name: string;
+    description?: string;
+    isPublic: boolean;
+    maxUsers: number;
+    users: User[];
+    activePresence: UserPresence[];
+    createdAt: number;
+    lastActivity: number;
+    settings: CollaborationSettings;
+}
+
+export interface CollaborationSettings {
+    allowAnonymous: boolean;
+    requireApproval: boolean;
+    enableVoiceChat: boolean;
+    enableTextChat: boolean;
+    autoSaveInterval: number; // seconds
+    conflictResolution: "auto" | "manual";
+    presenceTimeout: number; // milliseconds
+    operationTimeout: number; // milliseconds
+}
+
+export interface CollaborationState {
+    isEnabled: boolean;
+    isConnected: boolean;
+    isHost: boolean;
+    currentUser?: User;
+    session?: CollaborationSession;
+    connectionStatus: "disconnected" | "connecting" | "connected" | "error";
+    lastSync: number; // Timestamp
+    pendingOperations: ChangeOperation[];
+    operationHistory: ChangeOperation[];
+    conflicts: ConflictResolution[];
+    presenceIndicators: boolean;
+    showCursors: boolean;
+    showSelections: boolean;
+    error?: string;
+}
+
+export interface VersionControl {
+    version: string; // Semantic version (e.g., "1.2.3")
+    timestamp: number;
+    authorId: string;
+    message: string;
+    operations: ChangeOperation[];
+    parentVersion?: string;
+    branches?: string[];
+    tags?: string[];
+    isSnapshot: boolean;
+}
+
+export interface CollaborationMessage {
+    id: string;
+    type: "operation" | "presence" | "cursor" | "selection" | "sync" | "conflict" | "user-joined" | "user-left";
+    timestamp: number;
+    userId: string;
+    sessionId: string;
+    data: any;
+    acknowledge?: boolean;
+    retry?: number;
+}
+
+// Plugin System Types - Stage 12 Step 7
+
+// Plugin Manifest
+export interface PluginManifest {
+    id: string;
+    name: string;
+    version: string;
+    description: string;
+    author: string;
+    homepage?: string;
+    repository?: string;
+    license?: string;
+    keywords: string[];
+    category: PluginCategory;
+    iconUrl?: string;
+    screenshots?: string[];
+    minimumEditorVersion: string;
+    dependencies?: PluginDependency[];
+    permissions: PluginPermission[];
+    extensionPoints: string[]; // Extension points this plugin provides
+    requiredExtensionPoints?: string[]; // Extension points this plugin requires
+}
+
+export type PluginCategory = "tool" | "exporter" | "importer" | "effect" | "ui" | "utility" | "integration";
+
+export interface PluginDependency {
+    id: string;
+    version: string; // Semantic version range (e.g., "^1.0.0")
+    optional?: boolean;
+}
+
+export type PluginPermission =
+    | "canvas:read"
+    | "canvas:write"
+    | "objects:read"
+    | "objects:write"
+    | "files:read"
+    | "files:write"
+    | "network:request"
+    | "storage:read"
+    | "storage:write"
+    | "ui:create"
+    | "ui:modify"
+    | "system:notifications";
+
+// Plugin Interface
+export interface Plugin {
+    manifest: PluginManifest;
+    isLoaded: boolean;
+    isEnabled: boolean;
+    loadedAt?: number;
+    enabledAt?: number;
+    state: PluginState;
+    error?: string;
+    instance?: PluginInstance;
+}
+
+export interface PluginState {
+    [key: string]: any;
+}
+
+export interface PluginInstance {
+    initialize: (api: PluginAPI) => Promise<void>;
+    activate?: () => Promise<void>;
+    deactivate?: () => Promise<void>;
+    destroy?: () => Promise<void>;
+    executeAction?: (actionId: string, params?: any) => Promise<any>;
+    getState?: () => PluginState;
+    setState?: (state: Partial<PluginState>) => void;
+}
+
+// Plugin API for safe editor interaction
+export interface PluginAPI {
+    // Canvas API
+    canvas: {
+        getObjects: () => readonly CanvasObject[];
+        getSelectedObjects: () => readonly CanvasObject[];
+        addObject: (object: Omit<CanvasObject, "id">) => string;
+        updateObject: (id: string, updates: Partial<CanvasObject>) => boolean;
+        deleteObject: (id: string) => boolean;
+        selectObjects: (objectIds: string[]) => void;
+        clearSelection: () => void;
+        getViewport: () => ViewportState;
+        setViewport: (viewport: Partial<ViewportState>) => void;
+        getBounds: (objectIds?: string[]) => Bounds;
+    };
+
+    // Layers API
+    layers: {
+        getLayers: () => readonly Layer[];
+        addLayer: (layer: Omit<Layer, "id">) => string;
+        updateLayer: (id: string, updates: Partial<Layer>) => boolean;
+        deleteLayer: (id: string) => boolean;
+        reorderLayers: (layerOrder: string[]) => void;
+    };
+
+    // Tools API
+    tools: {
+        getActiveTool: () => ToolType;
+        setActiveTool: (tool: ToolType) => void;
+        registerTool?: (tool: CustomTool) => boolean;
+        unregisterTool?: (toolId: string) => boolean;
+    };
+
+    // Export/Import API
+    io: {
+        exportSVG: (options?: ExportOptions) => Promise<Blob>;
+        exportPNG: (options?: ExportOptions) => Promise<Blob>;
+        exportJSON: () => Promise<Blob>;
+        importFromFile: (file: File) => Promise<boolean>;
+        showFileDialog: (options: FileDialogOptions) => Promise<File[]>;
+    };
+
+    // UI API
+    ui: {
+        showNotification: (message: string, type?: "info" | "success" | "warning" | "error") => void;
+        showDialog: (config: DialogConfig) => Promise<any>;
+        createPanel: (config: PanelConfig) => PanelInstance;
+        registerMenuItem: (config: MenuItemConfig) => boolean;
+        unregisterMenuItem: (id: string) => boolean;
+    };
+
+    // Storage API
+    storage: {
+        get: (key: string) => Promise<any>;
+        set: (key: string, value: any) => Promise<void>;
+        remove: (key: string) => Promise<void>;
+        clear: () => Promise<void>;
+    };
+
+    // Events API
+    events: {
+        on: (event: string, callback: (...args: any[]) => void) => () => void;
+        emit: (event: string, ...args: any[]) => void;
+        off: (event: string, callback: (...args: any[]) => void) => void;
+    };
+
+    // Plugin System API
+    plugins: {
+        getPlugin: (id: string) => Plugin | undefined;
+        getPlugins: () => readonly Plugin[];
+        executePluginAction: (pluginId: string, actionId: string, params?: any) => Promise<any>;
+    };
+}
+
+// Extension Points System
+export interface ExtensionPoint {
+    id: string;
+    name: string;
+    description: string;
+    type: ExtensionPointType;
+    version: string;
+    providedBy: string; // Plugin ID that provides this extension point
+    config?: ExtensionPointConfig;
+    handlers: ExtensionHandler[];
+}
+
+export type ExtensionPointType =
+    | "tool"
+    | "exporter"
+    | "importer"
+    | "effect"
+    | "property-control"
+    | "ui-component"
+    | "menu-item"
+    | "toolbar-button"
+    | "panel"
+    | "hook";
+
+export interface ExtensionPointConfig {
+    [key: string]: any;
+}
+
+export interface ExtensionHandler {
+    id: string;
+    pluginId: string;
+    priority: number; // Higher number = higher priority
+    enabled: boolean;
+    handler: (...args: any[]) => any;
+    metadata?: Record<string, any>;
+}
+
+// Custom tool definition for plugins
+export interface CustomTool {
+    id: string;
+    name: string;
+    icon: string;
+    cursor?: string;
+    options?: ToolOptions;
+    onActivate?: () => void;
+    onDeactivate?: () => void;
+    onMouseDown?: (event: CanvasMouseEvent) => void;
+    onMouseMove?: (event: CanvasMouseEvent) => void;
+    onMouseUp?: (event: CanvasMouseEvent) => void;
+    onKeyDown?: (event: CanvasKeyEvent) => void;
+    onKeyUp?: (event: CanvasKeyEvent) => void;
+}
+
+export interface ToolOptions {
+    [key: string]: any;
+}
+
+// Export options for plugins
+export interface ExportOptions {
+    width?: number;
+    height?: number;
+    scale?: number;
+    format?: string;
+    quality?: number;
+    includeMetadata?: boolean;
+    optimize?: boolean;
+}
+
+// File dialog options
+export interface FileDialogOptions {
+    accept?: string;
+    multiple?: boolean;
+    directory?: boolean;
+}
+
+// UI component interfaces for plugins
+export interface DialogConfig {
+    title: string;
+    content: string | React.ComponentType;
+    buttons?: DialogButton[];
+    size?: "small" | "medium" | "large";
+    modal?: boolean;
+}
+
+export interface DialogButton {
+    label: string;
+    action: "confirm" | "cancel" | "custom";
+    variant?: "primary" | "secondary" | "danger";
+    handler?: () => void;
+}
+
+export interface PanelConfig {
+    id: string;
+    title: string;
+    content: React.ComponentType;
+    position?: "left" | "right" | "bottom";
+    size?: number;
+    resizable?: boolean;
+    collapsible?: boolean;
+}
+
+export interface PanelInstance {
+    id: string;
+    show: () => void;
+    hide: () => void;
+    toggle: () => void;
+    setTitle: (title: string) => void;
+    setContent: (content: React.ComponentType) => void;
+    destroy: () => void;
+}
+
+export interface MenuItemConfig {
+    id: string;
+    label: string;
+    icon?: string;
+    shortcut?: string;
+    group?: string;
+    position?: number;
+    separator?: boolean;
+    submenu?: MenuItemConfig[];
+    action: () => void;
+}
+
+// Plugin Manager State
+export interface PluginManagerState {
+    plugins: Record<string, Plugin>;
+    extensionPoints: Record<string, ExtensionPoint>;
+    isInitialized: boolean;
+    loadingPlugins: string[];
+    errors: PluginError[];
+    lastUpdate: number;
+}
+
+export interface PluginError {
+    pluginId: string;
+    error: string;
+    timestamp: number;
+    critical?: boolean;
+}
+
+// Plugin Registry for discovery and management
+export interface PluginRegistry {
+    plugins: PluginRegistryEntry[];
+    categories: PluginCategoryInfo[];
+    tags: string[];
+    lastUpdated: number;
+}
+
+export interface PluginRegistryEntry {
+    manifest: PluginManifest;
+    downloadUrl: string;
+    fileSize: number;
+    downloadCount: number;
+    rating: number;
+    reviews: number;
+    verified: boolean;
+    publishedAt: number;
+    updatedAt: number;
+}
+
+export interface PluginCategoryInfo {
+    id: PluginCategory;
+    name: string;
+    description: string;
+    icon: string;
+    count: number;
+}
+
+export interface OperationalTransform {
+    id: string;
+    operation: ChangeOperation;
+    context: ChangeOperation[]; // Concurrent operations
+    transformed: ChangeOperation;
+    priority: number;
+    isValid: boolean;
 }

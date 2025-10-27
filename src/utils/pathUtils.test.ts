@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { PathNode, Point } from "../types/editor";
 import {
     addNodeAtPosition,
@@ -12,7 +12,49 @@ import {
     subtractPaths,
     unitePaths,
     updateNodePosition,
+    // Advanced path operations
+    simplifyPath,
+    smoothPath,
+    getPathLength,
+    getPointAtLength,
+    getTangentAtLength,
+    getNormalAtLength,
+    getPathBounds,
+    isPointInPath,
+    offsetPath,
+    validatePathData,
+    optimizePathData,
+    toAbsolutePath,
+    reversePath,
 } from "./pathUtils";
+
+// Mock Paper.js for advanced operations
+vi.mock("paper", () => ({
+    default: {
+        setup: vi.fn(),
+        Size: vi.fn().mockReturnValue({}),
+        Path: vi.fn().mockImplementation((pathData) => ({
+            pathData: pathData || "M0,0 L100,0 L100,100 L0,100 Z",
+            length: 100,
+            bounds: { x: 0, y: 0, width: 100, height: 100 },
+            getPointAt: vi.fn().mockReturnValue({ x: 50, y: 50 }),
+            getTangentAt: vi.fn().mockReturnValue({ x: 1, y: 0 }),
+            getNormalAt: vi.fn().mockReturnValue({ x: 0, y: 1 }),
+            contains: vi.fn().mockReturnValue(true),
+            simplify: vi.fn(),
+            smooth: vi.fn(),
+            reverse: vi.fn(),
+            remove: vi.fn(),
+            clone: vi.fn().mockReturnThis(),
+            strokeWidth: 0,
+            strokeJoin: "round",
+            fillColor: null,
+            strokeColor: null,
+        })),
+        Color: vi.fn(),
+        Point: vi.fn().mockImplementation((x, y) => ({ x, y })),
+    },
+}));
 
 describe("PathUtils", () => {
     describe("parsePathData", () => {
@@ -416,6 +458,254 @@ describe("PathUtils", () => {
                 const result = performPathOperation("invalid", paths);
 
                 expect(result).toBe(simpleSquare); // Falls back to first path
+            });
+        });
+    });
+
+    // Advanced Path Operations Tests - Stage 12 Step 8
+    describe("Advanced Path Operations", () => {
+        const testPath = "M0,0 L100,0 L100,100 L0,100 Z";
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        describe("simplifyPath", () => {
+            test("should simplify path with default tolerance", () => {
+                const result = simplifyPath(testPath);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should simplify path with custom tolerance", () => {
+                const result = simplifyPath(testPath, 2.0);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should handle empty path data", () => {
+                const result = simplifyPath("");
+                expect(result).toBe("");
+            });
+        });
+
+        describe("smoothPath", () => {
+            test("should smooth path with default factor", () => {
+                const result = smoothPath(testPath);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should smooth path with custom factor", () => {
+                const result = smoothPath(testPath, 0.8);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+        });
+
+        describe("getPathLength", () => {
+            test("should return path length", () => {
+                const length = getPathLength(testPath);
+                expect(length).toBe(100);
+            });
+
+            test("should return 0 for empty path", () => {
+                const length = getPathLength("");
+                expect(length).toBe(0);
+            });
+        });
+
+        describe("getPointAtLength", () => {
+            test("should return point at middle of path", () => {
+                const point = getPointAtLength(testPath, 0.5);
+                expect(point).toEqual({ x: 50, y: 50 });
+            });
+
+            test("should return point at start of path", () => {
+                const point = getPointAtLength(testPath, 0);
+                expect(point).toEqual({ x: 50, y: 50 });
+            });
+
+            test("should return point at end of path", () => {
+                const point = getPointAtLength(testPath, 1);
+                expect(point).toEqual({ x: 50, y: 50 });
+            });
+
+            test("should return null for invalid path", () => {
+                const point = getPointAtLength("", 0.5);
+                expect(point).toBeNull();
+            });
+        });
+
+        describe("getTangentAtLength", () => {
+            test("should return tangent vector", () => {
+                const tangent = getTangentAtLength(testPath, 0.5);
+                expect(tangent).toEqual({ x: 1, y: 0 });
+            });
+
+            test("should return null for invalid path", () => {
+                const tangent = getTangentAtLength("", 0.5);
+                expect(tangent).toBeNull();
+            });
+        });
+
+        describe("getNormalAtLength", () => {
+            test("should return normal vector", () => {
+                const normal = getNormalAtLength(testPath, 0.5);
+                expect(normal).toEqual({ x: 0, y: 1 });
+            });
+
+            test("should return null for invalid path", () => {
+                const normal = getNormalAtLength("", 0.5);
+                expect(normal).toBeNull();
+            });
+        });
+
+        describe("getPathBounds", () => {
+            test("should return path bounding box", () => {
+                const bounds = getPathBounds(testPath);
+                expect(bounds).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+            });
+
+            test("should return null for invalid path", () => {
+                const bounds = getPathBounds("");
+                expect(bounds).toBeNull();
+            });
+        });
+
+        describe("isPointInPath", () => {
+            test("should return true for point inside path", () => {
+                const isInside = isPointInPath(testPath, { x: 50, y: 50 });
+                expect(isInside).toBe(true);
+            });
+
+            test("should return false for invalid path", () => {
+                const isInside = isPointInPath("", { x: 50, y: 50 });
+                expect(isInside).toBe(false);
+            });
+        });
+
+        describe("offsetPath", () => {
+            test("should offset path with positive value", () => {
+                const result = offsetPath(testPath, 10);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should offset path with negative value", () => {
+                const result = offsetPath(testPath, -5);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should offset path with custom join type", () => {
+                const result = offsetPath(testPath, 10, "miter");
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should handle empty path", () => {
+                const result = offsetPath("", 10);
+                expect(result).toBe("");
+            });
+        });
+
+        describe("validatePathData", () => {
+            test("should validate correct path data", () => {
+                const result = validatePathData(testPath);
+                expect(result.isValid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+            });
+
+            test("should detect empty path data", () => {
+                const result = validatePathData("");
+                expect(result.isValid).toBe(false);
+                expect(result.errors).toContain("Path data must be a non-empty string");
+            });
+
+            test("should detect null path data", () => {
+                const result = validatePathData(null as any);
+                expect(result.isValid).toBe(false);
+                expect(result.errors).toContain("Path data must be a non-empty string");
+            });
+
+            test("should detect invalid characters", () => {
+                const result = validatePathData("invalid-path-123");
+                expect(result.isValid).toBe(false);
+                expect(result.errors.length).toBeGreaterThan(0);
+            });
+
+            test("should detect missing commands", () => {
+                const result = validatePathData("123 456 789");
+                expect(result.isValid).toBe(false);
+                expect(result.errors).toContain("Path must contain at least one valid command");
+            });
+        });
+
+        describe("optimizePathData", () => {
+            test("should optimize path data precision", () => {
+                const pathData = "M0.123456,0.789012 L100.987654,0.345678";
+                const result = optimizePathData(pathData, 2);
+                expect(result).toBe("M0.12,0.79 L100.99,0.35");
+            });
+
+            test("should handle default precision", () => {
+                const pathData = "M0.123456,0.789012";
+                const result = optimizePathData(pathData);
+                expect(result).toBe("M0.12,0.79");
+            });
+
+            test("should handle empty path data", () => {
+                const result = optimizePathData("");
+                expect(result).toBe("");
+            });
+
+            test("should preserve non-numeric content", () => {
+                const pathData = "M0,0 L100,abc";
+                const result = optimizePathData(pathData, 1);
+                expect(result).toContain("abc");
+            });
+        });
+
+        describe("toAbsolutePath", () => {
+            test("should convert relative to absolute coordinates", () => {
+                const result = toAbsolutePath(testPath);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should handle empty path", () => {
+                const result = toAbsolutePath("");
+                expect(result).toBe("");
+            });
+        });
+
+        describe("reversePath", () => {
+            test("should reverse path direction", () => {
+                const result = reversePath(testPath);
+                expect(result).toBeDefined();
+                expect(typeof result).toBe("string");
+            });
+
+            test("should handle empty path", () => {
+                const result = reversePath("");
+                expect(result).toBe("");
+            });
+        });
+
+        describe("Error Handling", () => {
+            test("should handle Paper.js errors gracefully", () => {
+                // Functions should not throw even if Paper.js fails
+                expect(() => getPathLength("invalid")).not.toThrow();
+                expect(() => simplifyPath("invalid")).not.toThrow();
+                expect(() => getPointAtLength("invalid", 0.5)).not.toThrow();
+            });
+
+            test("should return safe fallbacks on errors", () => {
+                expect(getPathLength("")).toBe(0);
+                expect(getPointAtLength("", 0.5)).toBeNull();
+                expect(getPathBounds("")).toBeNull();
+                expect(isPointInPath("", { x: 0, y: 0 })).toBe(false);
             });
         });
     });
